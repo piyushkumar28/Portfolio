@@ -1,0 +1,416 @@
+---
+/**
+ * The path of a request through the stack, drawn like an engineering diagram:
+ * numbered layers joined by labelled hand-offs, and a bracket for the runtime
+ * that wraps the backend layers. Horizontal on desktop, vertical on phones.
+ *
+ * Layout: one flex row (desktop) / column (phones). Hand-offs grow to fill the
+ * space between two layer names, so every arrow runs from one name to the
+ * next. The layers the runtime wraps sit in their own group, whose edge is the
+ * bracket, so it always spans exactly those layers.
+ *
+ * Every layer is a button (see scripts/explore.ts): hover, focus or tap it to
+ * keep its neighbours bright, light the joints between them in copper and read
+ * what the work there involves in the caption below.
+ */
+import type { CollectionEntry } from "astro:content";
+import StackLayer from "./StackLayer.astro";
+
+interface Props {
+  stack: CollectionEntry<"experience">["data"]["stack"];
+}
+
+const { stack } = Astro.props;
+const { layers, runtime, runtimeWraps } = stack;
+
+// Links: each layer to its neighbours; the runtime to the layers it wraps.
+const links = new Map<string, string[]>();
+const link = (a: string, b: string) => {
+  links.set(a, [...(links.get(a) ?? []), b]);
+  links.set(b, [...(links.get(b) ?? []), a]);
+};
+layers.forEach((layer, i) => layers[i + 1] && link(layer.id, layers[i + 1].id));
+runtimeWraps.forEach((id) => link(runtime.id, id));
+
+const item = (layer: (typeof layers)[number]) => {
+  const i = layers.indexOf(layer);
+  return {
+    layer,
+    number: String(i + 1).padStart(2, "0"),
+    links: links.get(layer.id) ?? [],
+    next: layers[i + 1],
+  };
+};
+const outside = layers.filter((layer) => !runtimeWraps.includes(layer.id)).map(item);
+const inside = layers.filter((layer) => runtimeWraps.includes(layer.id)).map(item);
+---
+
+<div class="stack" data-explore-stack>
+  <div class="stack__path" role="list" aria-label="The stack, from interface to data" data-roving>
+    {outside.map((props) => (
+      <StackLayer {...props} />
+    ))}
+
+    <div class="wrapped" data-edge={[runtime.id, ...runtimeWraps].join(" ")}>
+      <div class="wrapped__layers">
+        {inside.map((props) => (
+          <StackLayer {...props} />
+        ))}
+      </div>
+
+      <div class="runtime">
+        <span class="runtime__bracket" aria-hidden="true"></span>
+        <StackLayer layer={runtime} links={links.get(runtime.id) ?? []} />
+      </div>
+    </div>
+  </div>
+
+  <div class="stack__readout">
+    <p
+      class="stack__readout-title label"
+      data-caption-title="stack"
+      data-default="The path of a request"
+    >
+      The path of a request
+    </p>
+    <p class="stack__readout-text font-display" data-caption="stack" data-default={stack.intro}>
+      {stack.intro}
+    </p>
+  </div>
+</div>
+
+<script>
+  import { explore } from "@/scripts/explore";
+
+  document.querySelectorAll<HTMLElement>("[data-explore-stack]").forEach((root) => explore(root));
+</script>
+
+<style is:global>
+  /* Global but namespaced: StackLayer renders inside this component. */
+  .stack {
+    --line: var(--color-fg-muted);
+    --name-size: clamp(1.75rem, 1.2rem + 2.4vw, 2.5rem);
+    --t: var(--dur-base) var(--ease-out-expo);
+  }
+
+  /* Layers ------------------------------------------------------------- */
+  .stack .layer {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stack .layer__tier {
+    color: var(--color-mark);
+    white-space: nowrap;
+  }
+
+  .stack .layer__node {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-fg);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .stack .layer__name {
+    position: relative;
+    font-size: var(--name-size);
+    line-height: 1.08;
+    letter-spacing: -0.018em;
+    white-space: nowrap;
+    transition: color var(--t);
+  }
+
+  /* Active: a copper underline draws in from the left. */
+  .stack .layer__name::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 -0.125rem 0;
+    height: 1px;
+    background-color: var(--color-signature);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform var(--t);
+  }
+
+  .stack .layer__detail {
+    font-size: var(--text-small);
+    color: var(--color-fg-muted);
+  }
+
+  /* Hand-offs (phones: vertical joints with an arrow and the protocol) ---- */
+  .stack .handoff {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    min-height: 3rem;
+    margin-block: 0.875rem;
+  }
+
+  .stack .handoff__line {
+    position: relative;
+    order: -1;
+    flex: none;
+    align-self: stretch;
+    width: 1px;
+    margin-left: 0.25rem;
+    background-color: var(--line);
+    transition: background-color var(--t);
+  }
+
+  .stack .handoff__line::after {
+    content: "";
+    position: absolute;
+    left: -3px;
+    bottom: 0;
+    width: 7px;
+    height: 7px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    transform: rotate(45deg);
+    transition: border-color var(--t);
+  }
+
+  .stack .handoff__label {
+    font-size: var(--text-label);
+    line-height: 1.3;
+    letter-spacing: var(--text-label--letter-spacing);
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--color-fg-muted);
+    white-space: nowrap;
+  }
+
+  /* Wrapped layers + runtime (phones: bracket down the right edge) ------- */
+  /* The bracket hugs the widest wrapped layer rather than the page edge. */
+  .stack .wrapped {
+    display: grid;
+    grid-template-columns: max-content auto;
+    justify-content: start;
+    column-gap: 2rem;
+  }
+
+  .stack .runtime {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding-left: 1.25rem;
+  }
+
+  .stack .runtime__bracket {
+    position: absolute;
+    inset: 0.25rem auto 0.25rem 0;
+    width: 0.625rem;
+    border: 1px solid var(--line);
+    border-left: 0;
+    transition: border-color var(--t);
+  }
+
+  .stack .runtime .layer__tier {
+    display: none;
+  }
+
+  .stack .runtime .layer__node {
+    align-items: center;
+    margin: 0;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+
+  .stack .runtime .layer__name {
+    font-size: var(--text-subheading);
+  }
+
+  .stack .runtime .layer__name::after {
+    inset: 0 -0.125rem 0 auto;
+    width: 1px;
+    height: auto;
+    transform: scaleY(0);
+    transform-origin: center bottom;
+  }
+
+  /* Readout ------------------------------------------------------------ */
+  .stack__readout {
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-rule);
+    min-height: 8rem;
+  }
+
+  .stack__readout-title {
+    color: var(--color-mark);
+  }
+
+  .stack__readout-text {
+    margin-top: 0.625rem;
+    max-width: 40ch;
+    font-size: var(--text-subheading);
+    line-height: 1.3;
+  }
+
+  .stack__readout-text.is-swapping {
+    animation: enter-rise var(--dur-fast) var(--ease-out-expo);
+  }
+
+  /* States ------------------------------------------------------------- */
+  .stack.is-exploring .layer__node:not(.is-active):not(.is-linked) .layer__name {
+    color: var(--color-fg-muted);
+  }
+
+  .stack .layer__node.is-active .layer__name::after {
+    transform: scaleX(1);
+  }
+
+  .stack .runtime .layer__node.is-active .layer__name::after {
+    transform: scaleY(1);
+  }
+
+  .stack .handoff.is-lit .handoff__line,
+  .stack .wrapped.is-lit .runtime::before {
+    background-color: var(--color-signature);
+  }
+
+  .stack .handoff.is-lit .handoff__line::after,
+  .stack .wrapped.is-lit .runtime__bracket {
+    border-color: var(--color-signature);
+  }
+
+  /* Desktop: one horizontal path ---------------------------------------- */
+  @media (min-width: 64rem) {
+    .stack {
+      --name-size: clamp(1.625rem, 0.6rem + 1.9vw, 2.5rem);
+    }
+
+    .stack .stack__path,
+    .stack .wrapped__layers {
+      display: flex;
+      align-items: flex-start;
+    }
+
+    /* Layers are sized from content; the free space goes to the hand-offs.
+       Every hand-off starts from the same basis, wider than its label, and
+       the wrapped group, holding two of the three, takes twice the share, so
+       all three arrows come out the same length. */
+    .stack .wrapped {
+      display: flex;
+      flex: 2 1 auto;
+      flex-direction: column;
+    }
+
+    .stack .stack__path > .handoff,
+    .stack .wrapped__layers > .handoff {
+      flex: 1 1 6rem;
+      min-width: 6rem;
+    }
+
+    /* Line on the names' centre line (label + gap + ~half a name). */
+    .stack .handoff {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.5rem;
+      min-height: 0;
+      margin: calc(var(--name-size) * 0.56) 1rem 0;
+    }
+
+    .stack .handoff__label {
+      order: -1;
+      text-align: center;
+    }
+
+    .stack .handoff__line {
+      order: 0;
+      width: auto;
+      height: 1px;
+      margin: 0;
+    }
+
+    .stack .handoff__line::after {
+      left: auto;
+      right: 0;
+      bottom: -3px;
+      transform: rotate(-45deg);
+    }
+
+    /* Bracket under the wrapped layers, with a stem down to the runtime. */
+    .stack .runtime {
+      flex-direction: column;
+      align-items: center;
+      margin-top: 1.5rem;
+      padding: 1.875rem 0 0;
+    }
+
+    .stack .runtime__bracket {
+      inset: 0 0 auto 0;
+      width: auto;
+      height: 0.75rem;
+      border: 1px solid var(--line);
+      border-top: 0;
+    }
+
+    .stack .runtime::before {
+      content: "";
+      position: absolute;
+      top: 0.75rem;
+      left: 50%;
+      width: 1px;
+      height: 0.875rem;
+      background-color: var(--line);
+      transition: background-color var(--t);
+    }
+
+    .stack .runtime .layer {
+      align-items: center;
+    }
+
+    .stack .runtime .layer__tier {
+      display: block;
+    }
+
+    .stack .runtime .layer__node {
+      align-items: center;
+      writing-mode: horizontal-tb;
+      transform: none;
+    }
+
+    .stack .runtime .layer__name::after {
+      inset: auto 0 -0.125rem 0;
+      width: auto;
+      height: 1px;
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    .stack .runtime .layer__node.is-active .layer__name::after {
+      transform: scaleX(1);
+    }
+
+    /* Spans the content width, so these columns match the page grid: the
+       text lines up with the role summary above. */
+    .stack__readout {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      column-gap: var(--col-gap);
+      margin-top: 3.5rem;
+      min-height: 6.5rem;
+    }
+
+    .stack__readout-title {
+      grid-column: 1 / span 3;
+    }
+
+    .stack__readout-text {
+      grid-column: 4 / -1;
+      margin-top: 0;
+    }
+  }
+</style>

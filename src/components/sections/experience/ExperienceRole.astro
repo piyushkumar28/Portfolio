@@ -1,14 +1,13 @@
 ---
 /**
- * One role, set as an editorial "case" on the 12-column grid:
- *  - the start year as a large numeral in the index column (sticky on desktop),
- *    with a copper square when the role is current — the site's mark for "now";
- *  - title, company and a short summary;
- *  - areas of work in a 2×2 grid of ruled cells, each with the tools used;
- *  - three short notes on what the work is teaching.
- * Must be a direct child of a `.grid-editorial` container.
+ * One role: the start year as a large numeral in the index column (copper
+ * square when current — the site's mark for "now"), the company and a short
+ * summary, then the stack the work runs through (StackPath).
+ * Must be a direct child of a `.grid-editorial` container; the role title is
+ * the section heading (see Experience.astro).
  */
 import type { CollectionEntry } from "astro:content";
+import StackPath from "./StackPath.astro";
 
 interface Props {
   entry: CollectionEntry<"experience">;
@@ -17,11 +16,9 @@ interface Props {
 const { entry } = Astro.props;
 const role = entry.data;
 const isCurrent = role.end === null;
-const titleId = `role-${entry.id}`;
-const [titleLead, ...titleRest] = role.role.split(" / ");
 ---
 
-<article class="role" aria-labelledby={titleId}>
+<div class="role">
   <p class="role__when" data-reveal>
     <span class="role__start font-display">{role.start}</span>
     <span class="role__until label">
@@ -31,49 +28,15 @@ const [titleLead, ...titleRest] = role.role.split(" / ");
     </span>
   </p>
 
-  <header class="role__head" data-reveal style="--delay: 80ms">
-    <h3 id={titleId} class="role__title font-display text-headline">
-      {titleLead}
-      <span class="role__slash" aria-hidden="true">
-        {titleRest.length > 0 && "\u00a0/ "}
-      </span>
-      {titleRest.length > 0 && <span class="sr-only">{" and "}</span>}
-      {titleRest.join(" / ")}
-    </h3>
+  <div class="role__meta" data-reveal style="--delay: 80ms">
     <p class="role__company">{role.company}</p>
-  </header>
-
-  <p class="role__summary font-display text-standfirst" data-reveal style="--delay: 140ms">
-    {role.summary}
-  </p>
-
-  <div class="role__block">
-    <h4 class="role__label label">Areas of work</h4>
-    <ul class="areas" role="list">
-      {role.areas.map((area, i) => (
-        <li class="area" data-reveal style={`--delay: ${(i % 2) * 90}ms`}>
-          <h5 class="area__title font-display text-subheading">{area.title}</h5>
-          <p class="area__text">{area.text}</p>
-          <p class="area__tools label">
-            <span class="sr-only">Tools: </span>
-            {area.tools.join(" · ")}
-          </p>
-        </li>
-      ))}
-    </ul>
+    <p class="role__summary text-lead">{role.summary}</p>
   </div>
 
-  <div class="role__block">
-    <h4 class="role__label label">What it’s teaching me</h4>
-    <ul class="notes" role="list">
-      {role.learnings.map((note, i) => (
-        <li class="note font-display" data-reveal style={`--delay: ${i * 90}ms`}>
-          {note}
-        </li>
-      ))}
-    </ul>
+  <div class="role__stack" data-reveal style="--delay: 160ms">
+    <StackPath stack={role.stack} />
   </div>
-</article>
+</div>
 
 <style>
   .role {
@@ -82,21 +45,16 @@ const [titleLead, ...titleRest] = role.role.split(" / ");
     grid-template-columns: subgrid;
   }
 
-  /* Explicit classes (not `.role > *`): a scoped child selector would outrank
-     the desktop placements below. */
   .role__when,
-  .role__head,
-  .role__summary,
-  .role__block {
+  .role__meta,
+  .role__stack {
     grid-column: content;
   }
 
-  /* Year ------------------------------------------------------------- */
   .role__when {
     display: flex;
     align-items: baseline;
     gap: 1.25rem;
-    margin-bottom: 1.5rem;
   }
 
   .role__start {
@@ -120,132 +78,37 @@ const [titleLead, ...titleRest] = role.role.split(" / ");
     background-color: var(--color-signature);
   }
 
-  /* Title ------------------------------------------------------------ */
-  .role__title {
-    max-width: 18ch;
-  }
-
-  .role__slash {
-    color: var(--color-fg-muted);
-    font-weight: 300;
+  .role__meta {
+    margin-top: 1.75rem;
   }
 
   .role__company {
-    margin-top: 1.125rem;
     font-size: var(--text-lead);
     line-height: var(--text-lead--line-height);
     font-weight: 500;
-    color: var(--color-fg-muted);
   }
 
   .role__summary {
-    margin-top: 2.25rem;
-    max-width: 38ch;
-  }
-
-  /* Blocks ----------------------------------------------------------- */
-  .role__block {
-    margin-top: clamp(3.5rem, 2rem + 4vw, 6rem);
-  }
-
-  .role__label {
-    color: var(--color-mark);
-    margin-bottom: 1.25rem;
-  }
-
-  .areas {
-    display: grid;
-    grid-template-columns: 1fr;
-    column-gap: calc(var(--col-gap) * 2);
-  }
-
-  /* Ruled cells: the rule draws in from the left as each cell is revealed. */
-  .area,
-  .note {
-    position: relative;
-    padding-block: 1.5rem 2rem;
-  }
-
-  .area::before,
-  .note::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 1px;
-    background-color: var(--color-rule);
-    transform-origin: left center;
-    transition: transform 1100ms var(--ease-out-expo);
-    transition-delay: calc(var(--delay, 0ms) + 120ms);
-  }
-
-  :global(.js) .area:not(.is-revealed)::before,
-  :global(.js) .note:not(.is-revealed)::before {
-    transform: scaleX(0);
-  }
-
-  .area__text {
     margin-top: 0.75rem;
-    max-width: 46ch;
+    max-width: 58ch;
     color: var(--color-fg-muted);
   }
 
-  .area__tools {
-    margin-top: 1.25rem;
-    line-height: 1.7;
+  .role__stack {
+    margin-top: clamp(3.5rem, 2rem + 4vw, 6rem);
   }
 
-  .notes {
-    display: grid;
-    grid-template-columns: 1fr;
-    column-gap: calc(var(--col-gap) * 2);
-  }
-
-  .note {
-    font-size: var(--text-subheading);
-    line-height: 1.3;
-    letter-spacing: -0.008em;
-    font-style: italic;
-    font-weight: 360;
-    max-width: 26ch;
-  }
-
-  @media (min-width: 48rem) {
-    .areas {
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .notes {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-
-  /* Desktop: the year holds the index column and stays in view. -------- */
   @media (min-width: 64rem) {
     .role__when {
       grid-column: col-start 1 / span 3;
-      grid-row: 1 / span 5;
-      align-self: start;
-      position: sticky;
-      top: 2.5rem;
       flex-direction: column;
       gap: 1rem;
-      margin-bottom: 0;
     }
 
-    .role__head,
-    .role__block {
-      grid-column: col-start 4 / content-end;
-    }
-
-    .role__summary {
-      grid-column: col-start 4 / span 8;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    :global(.js) .area:not(.is-revealed)::before,
-    :global(.js) .note:not(.is-revealed)::before {
-      transform: none;
+    .role__meta {
+      grid-column: col-start 4 / span 7;
+      margin-top: 0;
+      padding-top: 0.5rem;
     }
   }
 </style>

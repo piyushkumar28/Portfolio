@@ -1,36 +1,46 @@
-# Copy is a draft for Piyush to review — keep it factual.
+# Keep this factual: no invented metrics, scale, team sizes or outcomes.
 - id: inthera-consulting-group
-  role: Operations Specialist / Backend Developer
+  role: Backend Developer
   company: Inthera Consulting Group
   start: 2025
   end: null
   summary: >-
-    A hybrid role between operations and engineering. On the engineering side,
-    the focus is backend work in Python and Django and the REST APIs around it,
-    alongside React-based frontend work, testing, debugging integrations and
-    automating repetitive workflows.
-  areas:
-    - title: Backend & APIs
-      text: >-
-        Building and maintaining features in Python and Django, and working
-        with REST APIs, checking them along the way in Postman.
-      tools: [Python, Django, REST APIs, Postman]
-    - title: Frontend
-      text: >-
-        React-based frontend work, for the features that need an interface as
-        well as an endpoint.
-      tools: [React]
-    - title: Testing & debugging
-      text: >-
-        Writing tests with Pytest, automating browser checks with Selenium, and
-        following issues across integrations until the cause is clear.
-      tools: [Pytest, Selenium]
-    - title: Environments & automation
-      text: >-
-        Using Docker for consistent environments, and building automation
-        workflows that take repetitive steps out of the day.
-      tools: [Docker, Automation workflows]
-  learnings:
-    - Read the whole system. Most problems sit where two parts meet.
-    - Tests are what let you change things with confidence.
-    - Seeing how software is used day to day changes how you build it.
+    I build backend features in Python and Django: REST APIs, the PostgreSQL
+    data behind them, and integrations with other systems. Where a feature
+    needs an interface, I work in React too.
+  tools: [Python, Django, REST APIs, SQL, PostgreSQL, Docker, React]
+  stack:
+    intro: >-
+      One request, from the interface to the database, with the backend
+      running in Docker.
+    layers:
+      - id: react
+        tier: Interface
+        name: React
+        detail: Frontend
+        handoff: HTTP · JSON
+        text: Where a feature needs an interface, I build it in React on top of the same APIs.
+      - id: rest
+        tier: API
+        name: REST APIs
+        detail: Integrations
+        handoff: In process
+        text: Endpoints for the frontend, and integrations that connect the backend to other systems.
+      - id: django
+        tier: Application
+        name: Django
+        detail: Python
+        handoff: ORM · SQL
+        text: The core of the work. Models, business logic and the views behind each endpoint, in Python.
+      - id: postgres
+        tier: Data
+        name: PostgreSQL
+        detail: SQL
+        text: Relational data, reached through Django’s ORM and plain SQL.
+    runtime:
+      id: docker
+      tier: Runtime
+      name: Docker
+      detail: Containers
+      text: Packages the backend so it runs the same on every machine.
+    runtimeWraps: [rest, django, postgres]

@@ -31,12 +31,13 @@ src/
 │  ├─ ui/                    # primitives: Button, Arrow, ArrowSwap
 │  ├─ layout/                # SiteHeader, SkipLink, Section, SectionHeader
 │  └─ sections/              # one folder per page section (hero/, about/, experience/, skills/)
-├─ content/experience.yaml   # roles (content collection, schema in content.config.ts)
+├─ content/experience.yaml   # roles + each role's stack (schema in content.config.ts)
 ├─ data/site.ts              # site-wide facts: name, role, availability, contact, nav
-├─ data/skills.ts            # skill groups (no levels or percentages)
+├─ data/skills.ts            # five skill groups and the links between tools
 ├─ layouts/BaseLayout.astro  # <head>, meta, fonts, structured data
 ├─ pages/index.astro         # composes the sections in order
 ├─ scripts/reveal.ts         # scroll reveal (progressive enhancement)
+├─ scripts/explore.ts        # shared hover/focus/tap behaviour of the two diagrams
 └─ styles/
    ├─ tokens.css             # palette, semantic colours, type scale, motion
    └─ global.css             # base styles, editorial grid, motion utilities
@@ -46,6 +47,18 @@ src/
 copy lives with its section; repeatable records live in content collections
 (`experience` so far). The Skills section derives its "used in my current
 role" marks from the current role's tools, so the two sections can't disagree.
+
+**The two diagrams.**
+
+- _Experience_ (`StackPath`, `StackLayer`): the current role drawn as the path
+  of one request — React → REST APIs → Django → PostgreSQL — with Docker as
+  the runtime wrapping the backend. Layers, hand-off labels and descriptions
+  come from the role's `stack` in `experience.yaml`.
+- _Skills_ (`SkillMap`): five groups with Backend at the centre. A line
+  between two groups is drawn only where a tool link in `data/skills.ts`
+  crosses them, so adding a link is the only way to add a line. From 80rem the
+  groups sit around Backend and the connectors are measured and drawn in SVG;
+  below that the map becomes a tree rooted at Backend.
 
 ## Design system — "Ink & Paper"
 
@@ -81,7 +94,11 @@ left, the portrait emerges from the band it stands on.
   triggered by hover or keyboard focus on a `.swap-trigger` ancestor.
 - The About principles have one active row: the hovered row with a mouse,
   otherwise the row crossing the middle of the screen.
-- Skills has a switch (`role="switch"`) that highlights current-role tools.
+- Experience and Skills are explorable diagrams (`scripts/explore.ts`):
+  hovering, focusing or tapping a node keeps its connected nodes bright, lights
+  the lines between them in copper and swaps in a one-line description. Tap or
+  click pins a node; Escape or a click elsewhere clears it. Each list is one
+  tab stop, with arrow keys / Home / End inside it.
 - On phones the sections move into a full-screen `<dialog>` menu.
 - Without JS everything is static and visible; with `prefers-reduced-motion`
   everything appears in its final state.
