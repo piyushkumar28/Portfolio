@@ -1,0 +1,20 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import SkipLink from "@/components/layout/SkipLink.astro";
+import SiteHeader from "@/components/layout/SiteHeader.astro";
+import Hero from "@/components/sections/hero/Hero.astro";
+import About from "@/components/sections/about/About.astro";
+---
+
+<BaseLayout>
+  <SkipLink />
+  <SiteHeader />
+  <main id="main">
+    <Hero />
+    <About />
+  </main>
+</BaseLayout>
+
+<script>
+  import "@/scripts/reveal";
+</script>

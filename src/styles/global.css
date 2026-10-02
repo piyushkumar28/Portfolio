@@ -1,0 +1,190 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+
+@layer base {
+  html {
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    font-size: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    min-height: 100svh;
+    background-color: var(--color-bg);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    font-kerning: normal;
+    font-optical-sizing: auto;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-ink);
+    color: var(--color-ivory);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 4px;
+    border-radius: var(--radius-xs);
+  }
+
+  [id] {
+    scroll-margin-top: 1.5rem;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Editorial grid                                                      */
+/*                                                                     */
+/* Full-bleed outer tracks around N content columns. Named lines:      */
+/*   full-start · content-start · col-start 1…N · content-end · full-end */
+/* e.g. `grid-column: col-start 3 / span 4` or                         */
+/*      `grid-column: col-start 9 / full-end` (bleeds to the edge).    */
+/* Subgrids inherit these names.                                       */
+/* ------------------------------------------------------------------ */
+
+@layer components {
+  .grid-editorial {
+    --cols: 6;
+    display: grid;
+    column-gap: var(--col-gap);
+    grid-template-columns:
+      [full-start] minmax(calc(var(--gutter) - var(--col-gap)), 1fr)
+      [content-start] repeat(
+        var(--cols),
+        [col-start]
+          minmax(0, calc((var(--content-max) - (var(--cols) - 1) * var(--col-gap)) / var(--cols)))
+      )
+      [content-end] minmax(calc(var(--gutter) - var(--col-gap)), 1fr)
+      [full-end];
+  }
+
+  .grid-editorial > * {
+    grid-column: content;
+  }
+
+  @media (min-width: 48rem) {
+    .grid-editorial {
+      --cols: 12;
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Typography utilities                                                */
+/* ------------------------------------------------------------------ */
+
+@utility font-display {
+  font-family: var(--font-serif);
+  font-weight: 380;
+  font-optical-sizing: auto;
+}
+
+@utility label {
+  font-family: var(--font-sans);
+  font-size: var(--text-label);
+  line-height: var(--text-label--line-height);
+  letter-spacing: var(--text-label--letter-spacing);
+  font-weight: 500;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility numerals-tabular {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion                                                              */
+/* ------------------------------------------------------------------ */
+
+/* Hero entrance: CSS-only so it never waits on JavaScript. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.875rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: scale(1.025);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility enter-rise {
+  animation: rise var(--dur-slow) var(--ease-editorial) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+@utility enter-settle {
+  animation: settle 1100ms var(--ease-editorial) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+/* Scroll reveal: only hides content once JS is confirmed (html.js),
+   so the page is fully readable without JavaScript. */
+@layer components {
+  [data-reveal] {
+    transition:
+      opacity var(--dur-slow) var(--ease-editorial),
+      transform var(--dur-slow) var(--ease-editorial);
+    transition-delay: var(--delay, 0ms);
+  }
+
+  .js [data-reveal]:not(.is-revealed) {
+    opacity: 0;
+    transform: translate3d(0, 1.25rem, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+  }
+
+  .js [data-reveal]:not(.is-revealed) {
+    opacity: 1;
+    transform: none;
+  }
+}

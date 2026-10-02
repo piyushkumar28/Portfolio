@@ -1,0 +1,82 @@
+---
+import Arrow from "@/components/ui/Arrow.astro";
+import { contactHref, nav, site } from "@/data/site";
+---
+
+<header class="site-header grid-editorial enter-rise" style="--delay: 0ms">
+  <div class="site-header__inner">
+    <a href="/" class="site-header__name" aria-label={`${site.name} — home`}>
+      {site.name}
+    </a>
+
+    <nav aria-label="Primary" class="site-header__nav">
+      <ul role="list">
+        {nav.map((item) => (
+          <li>
+            <a href={item.href} class="site-header__link">
+              {item.label}
+            </a>
+          </li>
+        ))}
+        <li>
+          <a href={contactHref} class="site-header__link site-header__link--contact">
+            Let’s Talk
+            <Arrow direction="up-right" class="site-header__arrow" />
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    height: var(--header-h);
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  .site-header__name {
+    font-family: var(--font-serif);
+    font-size: 1.3125rem;
+    font-weight: 450;
+    letter-spacing: -0.012em;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .site-header__nav ul {
+    display: flex;
+    align-items: center;
+    gap: clamp(1.25rem, 0.8rem + 1.6vw, 2.5rem);
+  }
+
+  .site-header__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.75rem;
+    font-size: var(--text-small);
+    font-weight: 500;
+    letter-spacing: 0.005em;
+    text-decoration: none;
+    color: var(--color-fg);
+    transition: color var(--dur-fast) var(--ease-editorial);
+  }
+
+  .site-header__link:hover {
+    color: var(--color-accent);
+  }
+
+  .site-header__nav :global(.site-header__arrow) {
+    transition: transform var(--dur-fast) var(--ease-editorial);
+  }
+
+  .site-header__link--contact:hover :global(.site-header__arrow) {
+    transform: translate(0.15rem, -0.15rem);
+  }
+</style>

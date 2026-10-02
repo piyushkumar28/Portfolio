@@ -1,0 +1,120 @@
+---
+import Arrow from "./Arrow.astro";
+
+/**
+ * Link-styled actions. Every CTA on the site is navigation, so this always renders <a>.
+ *  - primary: solid ink block; the arrow advances on hover.
+ *  - text:    understated link whose hairline underline redraws on hover.
+ */
+interface Props {
+  href: string;
+  variant?: "primary" | "text";
+  arrow?: "right" | "up-right" | "down";
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { href, variant = "primary", arrow, class: className, ...rest } = Astro.props;
+---
+
+<a href={href} class:list={["btn", `btn--${variant}`, className]} {...rest}>
+  <span class="btn__label">
+    <slot />
+  </span>
+  {arrow && <Arrow direction={arrow} class={`btn__arrow btn__arrow--${arrow}`} />}
+</a>
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    line-height: 1;
+    letter-spacing: 0.005em;
+    white-space: nowrap;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn :global(.btn__arrow) {
+    transition: transform var(--dur-fast) var(--ease-editorial);
+  }
+
+  /* Primary ---------------------------------------------------------- */
+  .btn--primary {
+    min-height: 3.375rem;
+    padding-inline: 1.625rem 1.5rem;
+    background-color: var(--color-fg);
+    color: var(--color-on-fg);
+    border-radius: var(--radius-sm);
+    transition: background-color var(--dur-fast) var(--ease-editorial);
+  }
+
+  .btn--primary:hover {
+    background-color: var(--color-accent);
+  }
+
+  /* Text ------------------------------------------------------------- */
+  .btn--text {
+    position: relative;
+    min-height: 2.75rem;
+    color: var(--color-fg);
+  }
+
+  .btn--text .btn__label {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 100% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    padding-bottom: 0.3125rem;
+    transition:
+      background-size var(--dur-base) var(--ease-editorial),
+      color var(--dur-fast) var(--ease-editorial);
+  }
+
+  .btn--text:hover {
+    color: var(--color-accent);
+  }
+
+  /* Underline retracts and redraws from the left on hover. */
+  @media (hover: hover) {
+    .btn--text:hover .btn__label {
+      animation: underline-redraw var(--dur-base) var(--ease-editorial);
+    }
+  }
+
+  @keyframes underline-redraw {
+    0% {
+      background-size: 100% 1px;
+      background-position: 100% 100%;
+    }
+    45% {
+      background-size: 0% 1px;
+      background-position: 100% 100%;
+    }
+    46% {
+      background-size: 0% 1px;
+      background-position: 0 100%;
+    }
+    100% {
+      background-size: 100% 1px;
+      background-position: 0 100%;
+    }
+  }
+
+  /* Arrow motion ----------------------------------------------------- */
+  .btn:hover :global(.btn__arrow--right) {
+    transform: translateX(0.25rem);
+  }
+
+  .btn:hover :global(.btn__arrow--up-right) {
+    transform: translate(0.15rem, -0.15rem);
+  }
+
+  .btn:hover :global(.btn__arrow--down) {
+    transform: translateY(0.2rem);
+  }
+</style>

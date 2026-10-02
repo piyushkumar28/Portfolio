@@ -1,0 +1,118 @@
+---
+/**
+ * The hero's closing "folio" line: availability on the left, the scroll cue on
+ * the right, set on a rule like the running foot of a printed page.
+ * Place it on the editorial grid spanning `content-start / full-end`.
+ */
+import type { HTMLAttributes } from "astro/types";
+import Arrow from "@/components/ui/Arrow.astro";
+import { site } from "@/data/site";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["folio", className]} {...rest}>
+  <div class="folio__availability">
+    <span class="folio__mark" aria-hidden="true"></span>
+    <ul role="list" class="folio__list">
+      {site.availability.map((item) => (
+        <li>{item}</li>
+      ))}
+    </ul>
+  </div>
+
+  <a href="#about" class="folio__scroll label">
+    Scroll to explore
+    <Arrow direction="down" class="folio__arrow" />
+  </a>
+</div>
+
+<style>
+  /* Subgrid: the rule runs on under the portrait to the right edge, while the
+     text stays aligned to the content columns. */
+  .folio {
+    display: grid;
+    grid-template-columns: subgrid;
+    row-gap: 1rem;
+    padding-top: 1.125rem;
+    border-top: 1px solid var(--color-rule-strong);
+  }
+
+  .folio__availability {
+    grid-column: content;
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+  }
+
+  /* The site's one copper detail. */
+  .folio__mark {
+    flex: none;
+    width: 0.4375rem;
+    height: 0.4375rem;
+    background-color: var(--color-signature);
+    transform: translateY(-0.0625rem);
+  }
+
+  .folio__list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .folio__scroll {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-fg-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color var(--dur-fast) var(--ease-editorial);
+  }
+
+  .folio__scroll:hover {
+    color: var(--color-fg);
+  }
+
+  .folio__scroll :global(.folio__arrow) {
+    width: 0.875rem;
+    height: 0.875rem;
+    transition: transform var(--dur-fast) var(--ease-editorial);
+  }
+
+  .folio__scroll:hover :global(.folio__arrow) {
+    transform: translateY(0.2rem);
+  }
+
+  @media (min-width: 48rem) {
+    .folio {
+      align-items: center;
+    }
+
+    .folio__availability {
+      grid-row: 1;
+      justify-self: start;
+    }
+
+    .folio__list {
+      flex-direction: row;
+    }
+
+    .folio__list li + li::before {
+      content: "·" / "";
+      margin-inline: 0.625rem;
+      color: var(--color-fg-muted);
+    }
+
+    .folio__scroll {
+      display: inline-flex;
+      grid-column: content;
+      grid-row: 1;
+      justify-self: end;
+      min-height: 2.75rem;
+    }
+  }
+</style>

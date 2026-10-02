@@ -1,0 +1,225 @@
+---
+import Button from "@/components/ui/Button.astro";
+import HeroFolio from "./HeroFolio.astro";
+import HeroPortrait from "./HeroPortrait.astro";
+import { contactHref, site } from "@/data/site";
+---
+
+<section class="hero grid-editorial" aria-labelledby="hero-title">
+  <p class="hero__eyebrow label enter-rise" style="--delay: 60ms">
+    {site.role}
+    <span class="hero__eyebrow-rule" aria-hidden="true"></span>
+  </p>
+
+  <h1 id="hero-title" class="hero__title font-display text-display">
+    <span class="hero__line enter-rise" style="--delay: 120ms">
+      Curious by nature.
+    </span>{" "}
+    <span class="hero__line hero__line--indent enter-rise" style="--delay: 200ms">
+      Driven by <em>problems.</em>
+    </span>
+  </h1>
+
+  <div class="hero__body">
+    <p class="hero__intro text-lead enter-rise" style="--delay: 320ms">
+      I’m {site.name}, a Software Engineer who enjoys solving problems, exploring new technologies,
+      and finding better ways to turn ideas into something useful.
+    </p>
+
+    <div class="hero__actions enter-rise" style="--delay: 400ms">
+      <Button href="#work" arrow="right">
+        View My Work
+      </Button>
+      <Button href={contactHref} variant="text" arrow="up-right">
+        Let’s Talk
+      </Button>
+    </div>
+  </div>
+
+  <HeroPortrait class="hero__portrait enter-settle" style="--delay: 160ms" />
+
+  <HeroFolio class="hero__folio enter-rise" style="--delay: 520ms" />
+</section>
+
+<style>
+  /*
+   * Composition notes
+   * - The portrait's subject occupies ~23%–74% of the image width and starts
+   *   7% from its top. On desktop, the headline's second line is sized so it
+   *   ends before the head; nothing ever overlaps the face.
+   * - The portrait stands on the folio rule and bleeds off the right edge.
+   */
+
+  /* ---------------------------------------------------------------- */
+  /* Mobile: headline → intro → actions → portrait → folio            */
+  /* ---------------------------------------------------------------- */
+
+  .hero {
+    --text-display: clamp(3rem, 15vw, 5.5rem);
+    position: relative;
+    padding-top: clamp(2.5rem, 1rem + 5vw, 4rem);
+    padding-bottom: 1.25rem;
+    overflow-x: clip;
+  }
+
+  .hero__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    color: var(--color-fg-muted);
+  }
+
+  .hero__eyebrow-rule {
+    width: 2.5rem;
+    height: 1px;
+    background-color: currentColor;
+  }
+
+  .hero__title {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: subgrid;
+    margin-top: 1.5rem;
+    text-wrap: wrap;
+  }
+
+  .hero__line {
+    display: block;
+    grid-column: content;
+  }
+
+  .hero__line--indent {
+    grid-column: col-start 2 / content-end;
+  }
+
+  .hero__title em {
+    font-style: italic;
+    font-weight: 360;
+    letter-spacing: -0.02em;
+  }
+
+  .hero__body {
+    margin-top: 2rem;
+  }
+
+  .hero__intro {
+    max-width: 34ch;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.75rem;
+    margin-top: 2rem;
+  }
+
+  .hero__portrait {
+    grid-column: col-start 2 / full-end;
+    justify-self: end;
+    width: 100%;
+    max-width: 30rem;
+    margin-top: 2.25rem;
+  }
+
+  .hero__folio {
+    position: relative;
+    z-index: 2;
+    grid-column: content-start / full-end;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Tablet: headline set on two lines; intro and portrait share the  */
+  /* lower band, the portrait standing on the folio rule.             */
+  /* ---------------------------------------------------------------- */
+
+  @media (min-width: 48rem) {
+    .hero {
+      --text-display: 9.4vw;
+      grid-template-rows: auto auto 1fr auto;
+      padding-bottom: 1.75rem;
+    }
+
+    .hero__eyebrow {
+      grid-row: 1;
+    }
+
+    .hero__title {
+      grid-row: 2;
+      margin-top: 1.75rem;
+      white-space: nowrap;
+    }
+
+    .hero__body {
+      grid-column: col-start 2 / span 6;
+      grid-row: 3;
+      align-self: end;
+      margin-top: 3rem;
+      padding-bottom: 2.5rem;
+    }
+
+    .hero__portrait {
+      grid-column: col-start 8 / full-end;
+      grid-row: 3;
+      align-self: end;
+      max-width: none;
+      margin-top: 2rem;
+    }
+
+    .hero__folio {
+      grid-row: 4;
+    }
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Desktop: the headline steps down towards the portrait; the       */
+  /* portrait rises beside line 2, bleeds off the right edge and      */
+  /* stands on the folio rule. Its height is capped by the viewport   */
+  /* so the folio stays in the first screen.                          */
+  /* ---------------------------------------------------------------- */
+
+  @media (min-width: 64rem) {
+    .hero {
+      /* Fitted so line 2 always clears the portrait's head (≥ ~45px). */
+      --text-display: clamp(4.5rem, 8.17vw - 0.6rem, 7.5rem);
+      --portrait-h: clamp(26rem, calc(100svh - var(--header-h) - 15rem), min(43vw, 42rem));
+      min-height: calc(100svh - var(--header-h));
+      grid-template-rows: auto auto minmax(2rem, 1fr) auto auto;
+      padding-top: clamp(2.5rem, 0.5rem + 3.5vw, 4.5rem);
+      padding-bottom: 2rem;
+    }
+
+    .hero__title {
+      margin-top: 1.75rem;
+    }
+
+    .hero__body {
+      grid-column: col-start 2 / span 5;
+      grid-row: 4;
+      margin-top: 0;
+      padding-bottom: 3.25rem;
+    }
+
+    .hero__intro {
+      max-width: 35ch;
+    }
+
+    .hero__portrait {
+      grid-column: col-start 8 / full-end;
+      grid-row: 2 / 5;
+      align-self: end;
+      width: auto;
+      margin-top: 0;
+    }
+
+    .hero__portrait :global(.portrait__img) {
+      width: auto;
+      height: var(--portrait-h);
+    }
+
+    .hero__folio {
+      grid-row: 5;
+    }
+  }
+</style>

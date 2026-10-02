@@ -1,0 +1,95 @@
+---
+import Section from "@/components/layout/Section.astro";
+import SectionHeader from "@/components/layout/SectionHeader.astro";
+import AboutPillar from "./AboutPillar.astro";
+
+const pillars = [
+  {
+    title: "Problem Solving",
+    text: "I start with the problem, not the tool. Breaking something complicated into smaller, clearer questions is where most of my progress happens\u00a0— and the best answer is often the simplest one that works.",
+  },
+  {
+    title: "Continuous Learning",
+    text: "New technologies are an invitation, not a threat. I learn by reading, experimenting and building small things until an idea clicks, and I’m comfortable saying “I don’t know yet” along the way.",
+  },
+  {
+    title: "Building",
+    text: "Ideas matter most once they’re real. I enjoy taking something from a rough sketch to working software, and caring about the details that make it reliable and genuinely useful.",
+  },
+];
+---
+
+<Section id="about" labelledBy="about-title">
+  <div class="about grid-editorial">
+    <SectionHeader label="About" titleId="about-title">
+      <span class="about__title-line">Always learning.</span>{" "}
+      <span class="about__title-line">Always building.</span>
+    </SectionHeader>
+
+    <div class="about__intro">
+      <p class="about__standfirst font-display text-standfirst" data-reveal>
+        I’m happiest somewhere between a messy problem and a working solution&nbsp;— understanding
+        how something works, why it breaks, and how it could be simpler.
+      </p>
+      <p class="about__body" data-reveal style="--delay: 90ms">
+        My work has taken me across the stack, from interfaces and APIs to cloud services,
+        automation and AI. I don’t pretend to know everything. I’d rather understand the problem
+        properly, learn what it asks of me, and build something that holds up.
+      </p>
+    </div>
+
+    <ol class="about__pillars" role="list" aria-label="What drives my work">
+      {pillars.map((pillar, i) => (
+        <AboutPillar index={i + 1} title={pillar.title}>
+          {pillar.text}
+        </AboutPillar>
+      ))}
+    </ol>
+  </div>
+</Section>
+
+<style>
+  .about__title-line {
+    display: block;
+  }
+
+  .about__intro {
+    display: grid;
+    grid-template-columns: subgrid;
+    row-gap: 1.5rem;
+    margin-top: 2.5rem;
+  }
+
+  .about__standfirst {
+    grid-column: content;
+    max-width: 30ch;
+  }
+
+  .about__body {
+    grid-column: content;
+    max-width: 52ch;
+    color: var(--color-fg-muted);
+  }
+
+  .about__pillars {
+    display: grid;
+    grid-template-columns: subgrid;
+    margin-top: clamp(4rem, 2rem + 6vw, 7.5rem);
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  @media (min-width: 64rem) {
+    .about__intro {
+      margin-top: 3.5rem;
+      row-gap: 2rem;
+    }
+
+    .about__standfirst {
+      grid-column: col-start 4 / span 7;
+    }
+
+    .about__body {
+      grid-column: col-start 4 / span 5;
+    }
+  }
+</style>

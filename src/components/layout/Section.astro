@@ -1,0 +1,32 @@
+---
+/**
+ * Page section shell: id + accessible name, vertical rhythm and colour tone.
+ * Tones re-map the semantic colour tokens (see styles/tokens.css), so a section's
+ * children never need tone-specific styles.
+ */
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"section"> {
+  id: string;
+  labelledBy: string;
+  tone?: "ivory" | "stone" | "dark";
+}
+
+const { id, labelledBy, tone = "ivory", class: className, ...rest } = Astro.props;
+---
+
+<section
+  id={id}
+  aria-labelledby={labelledBy}
+  data-tone={tone}
+  class:list={["section", className]}
+  {...rest}
+>
+  <slot />
+</section>
+
+<style>
+  .section {
+    padding-block: var(--section-space);
+  }
+</style>

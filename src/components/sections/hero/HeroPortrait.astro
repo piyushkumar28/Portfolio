@@ -1,0 +1,50 @@
+---
+import { Picture } from "astro:assets";
+import portrait from "@/assets/images/portrait/portrait.jpg";
+
+/**
+ * The portrait is shown unedited. Its studio-white background is blended into the
+ * page with `multiply`: white takes on the page tone, everything else is
+ * effectively unchanged. This avoids a bright white rectangle sitting on the
+ * ivory page, without cutting out or retouching the photograph.
+ *
+ * The wrapper paints the page colour itself, so the blend stays correct even when
+ * an entrance animation briefly isolates it in its own stacking context.
+ */
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"figure">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<figure class:list={["portrait", className]} {...rest}>
+  <Picture
+    src={portrait}
+    formats={["avif", "webp"]}
+    widths={[400, 600, 800, 1050]}
+    sizes="(min-width: 64rem) min(34vw, 523px), (min-width: 48rem) 42vw, min(84vw, 480px)"
+    alt="Portrait of Piyush Kumar"
+    priority
+    class="portrait__img"
+  />
+</figure>
+
+<style>
+  .portrait {
+    margin: 0;
+    background-color: var(--color-bg);
+    overflow: hidden;
+  }
+
+  .portrait :global(picture) {
+    display: block;
+  }
+
+  .portrait__img {
+    display: block;
+    width: 100%;
+    height: auto;
+    mix-blend-mode: multiply;
+  }
+</style>

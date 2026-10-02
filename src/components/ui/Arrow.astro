@@ -1,0 +1,45 @@
+---
+/**
+ * Hairline arrow drawn to match the type's stroke weight. Used in place of the
+ * → ↗ ↓ characters, which neither typeface includes (system fallbacks vary by platform).
+ * Always decorative: the adjacent text carries the meaning.
+ */
+interface Props {
+  direction?: "right" | "up-right" | "down";
+  class?: string;
+}
+
+const { direction = "right", class: className } = Astro.props;
+
+const paths = {
+  right: "M2 8h11.5M9 3.5 13.5 8 9 12.5",
+  "up-right": "M4 12 12 4M5.5 4H12v6.5",
+  down: "M8 2v11.5M3.5 9 8 13.5 12.5 9",
+} as const;
+---
+
+<svg
+  class:list={["arrow", className]}
+  viewBox="0 0 16 16"
+  width="16"
+  height="16"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.35"
+  stroke-linecap="square"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path d={paths[direction]}></path>
+</svg>
+
+<style>
+  .arrow {
+    display: inline-block;
+    flex: none;
+    width: 0.95em;
+    height: 0.95em;
+    vertical-align: -0.1em;
+    overflow: visible;
+  }
+</style>

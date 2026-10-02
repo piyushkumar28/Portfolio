@@ -1,0 +1,91 @@
+---
+/**
+ * One row of the About pillars: index, serif title and a short description,
+ * set between hairline rules. Must be placed in a subgrid of the editorial grid.
+ */
+interface Props {
+  index: number;
+  title: string;
+}
+
+const { index, title } = Astro.props;
+const number = String(index).padStart(2, "0");
+const delay = `${(index - 1) * 90}ms`;
+---
+
+<li class="pillar" data-reveal style={`--delay: ${delay}`}>
+  <span class="pillar__index label" aria-hidden="true">
+    {number}
+  </span>
+  <h3 class="pillar__title font-display text-heading">{title}</h3>
+  <p class="pillar__text">
+    <slot />
+  </p>
+</li>
+
+<style>
+  .pillar {
+    display: grid;
+    grid-column: content;
+    grid-template-columns: subgrid;
+    align-items: baseline;
+    row-gap: 0.875rem;
+    padding-block: 1.75rem 2.25rem;
+    border-top: 1px solid var(--color-rule);
+  }
+
+  .pillar__index {
+    grid-column: col-start 1;
+    grid-row: 1;
+    color: var(--color-fg-muted);
+  }
+
+  .pillar__title {
+    grid-column: col-start 2 / content-end;
+    grid-row: 1;
+  }
+
+  .pillar__text {
+    grid-column: col-start 2 / content-end;
+    grid-row: 2;
+    max-width: 44ch;
+    color: var(--color-fg-muted);
+  }
+
+  @media (min-width: 48rem) {
+    .pillar {
+      padding-block: 2.25rem 2.75rem;
+    }
+
+    .pillar__index {
+      grid-column: col-start 1 / span 2;
+    }
+
+    .pillar__title {
+      grid-column: col-start 3 / content-end;
+    }
+
+    .pillar__text {
+      grid-column: col-start 3 / span 8;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .pillar {
+      padding-block: 2.5rem 3rem;
+    }
+
+    .pillar__index {
+      grid-column: col-start 1 / span 3;
+    }
+
+    .pillar__title {
+      grid-column: col-start 4 / span 4;
+    }
+
+    .pillar__text {
+      grid-column: col-start 8 / content-end;
+      grid-row: 1;
+    }
+  }
+</style>
