@@ -10,6 +10,12 @@ interface Props {
 
 const { title = site.title, description = site.description } = Astro.props;
 
+/*
+ * The inline script below sets two classes on <html>:
+ *  - `js`: JS is available, so entrances and reveals may hide content first;
+ *  - `is-ready`: start the load choreography once the faces it uses are in
+ *    (max 700ms), with a hard fallback so nothing can stay hidden.
+ */
 const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
@@ -33,10 +39,23 @@ const personSchema = {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta name="twitter:card" content="summary" />
-
-    <!-- Marks JS as available before first paint, so scroll reveals never flash. -->
     <script is:inline>
-      document.documentElement.classList.add("js");
+      (() => {
+        const root = document.documentElement;
+        const ready = () => root.classList.add("is-ready");
+        root.classList.add("js");
+        setTimeout(ready, 1200);
+        addEventListener("DOMContentLoaded", () => {
+          const css = getComputedStyle(root);
+          const serif = css.getPropertyValue("--font-newsreader");
+          const sans = css.getPropertyValue("--font-instrument-sans");
+          const faces = [`380 1em ${serif}`, `italic 360 1em ${serif}`, `500 1em ${sans}`];
+          const timeout = new Promise((resolve) => setTimeout(resolve, 700));
+          Promise.race([Promise.all(faces.map((f) => document.fonts.load(f))), timeout])
+            .catch(() => {})
+            .then(() => requestAnimationFrame(ready));
+        });
+      })();
     </script>
     <Font cssVariable="--font-newsreader" preload={[{ style: "normal" }]} />
     <Font cssVariable="--font-instrument-sans" preload />

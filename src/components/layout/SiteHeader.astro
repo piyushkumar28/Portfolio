@@ -1,5 +1,5 @@
 ---
-import Arrow from "@/components/ui/Arrow.astro";
+import Button from "@/components/ui/Button.astro";
 import { contactHref, nav, site } from "@/data/site";
 ---
 
@@ -9,20 +9,19 @@ import { contactHref, nav, site } from "@/data/site";
       {site.name}
     </a>
 
-    <nav aria-label="Primary" class="site-header__nav">
-      <ul role="list">
+    <nav aria-label="Primary">
+      <ul role="list" class="site-header__nav">
         {nav.map((item) => (
           <li>
-            <a href={item.href} class="site-header__link">
+            <Button href={item.href} variant="quiet">
               {item.label}
-            </a>
+            </Button>
           </li>
         ))}
         <li>
-          <a href={contactHref} class="site-header__link site-header__link--contact">
+          <Button href={contactHref} variant="quiet" arrow="up-right">
             Let’s Talk
-            <Arrow direction="up-right" class="site-header__arrow" />
-          </a>
+          </Button>
         </li>
       </ul>
     </nav>
@@ -48,34 +47,9 @@ import { contactHref, nav, site } from "@/data/site";
     white-space: nowrap;
   }
 
-  .site-header__nav ul {
+  .site-header__nav {
     display: flex;
     align-items: center;
     gap: clamp(1.25rem, 0.8rem + 1.6vw, 2.5rem);
-  }
-
-  .site-header__link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    min-height: 2.75rem;
-    font-size: var(--text-small);
-    font-weight: 500;
-    letter-spacing: 0.005em;
-    text-decoration: none;
-    color: var(--color-fg);
-    transition: color var(--dur-fast) var(--ease-editorial);
-  }
-
-  .site-header__link:hover {
-    color: var(--color-accent);
-  }
-
-  .site-header__nav :global(.site-header__arrow) {
-    transition: transform var(--dur-fast) var(--ease-editorial);
-  }
-
-  .site-header__link--contact:hover :global(.site-header__arrow) {
-    transform: translate(0.15rem, -0.15rem);
   }
 </style>

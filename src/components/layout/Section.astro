@@ -3,9 +3,6 @@
  * Page section shell: id + accessible name, vertical rhythm and colour tone.
  * Tones re-map the semantic colour tokens (see styles/tokens.css), so a section's
  * children never need tone-specific styles.
- *
- * `pad="top"` drops the bottom padding, for sections that end in their own
- * full-bleed colour block (which then sets its own spacing).
  */
 import type { HTMLAttributes } from "astro/types";
 
@@ -13,28 +10,23 @@ interface Props extends HTMLAttributes<"section"> {
   id: string;
   labelledBy: string;
   tone?: "paper" | "ink" | "sage";
-  pad?: "both" | "top";
 }
 
-const { id, labelledBy, tone = "paper", pad = "both", class: className, ...rest } = Astro.props;
+const { id, labelledBy, tone = "paper", class: className, ...rest } = Astro.props;
 ---
 
 <section
   id={id}
   aria-labelledby={labelledBy}
   data-tone={tone}
-  class:list={["section", `section--pad-${pad}`, className]}
+  class:list={["section", className]}
   {...rest}
 >
   <slot />
 </section>
 
 <style>
-  .section--pad-both {
+  .section {
     padding-block: var(--section-space);
-  }
-
-  .section--pad-top {
-    padding-top: var(--section-space);
   }
 </style>

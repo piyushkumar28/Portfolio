@@ -1,0 +1,88 @@
+---
+/**
+ * An arrow that leaves in its own direction and is replaced by a fresh one
+ * arriving from behind — the site's single hover gesture for links.
+ *
+ * Triggered by hover or keyboard focus on the nearest `.swap-trigger` ancestor,
+ * so the parent link owns the interaction.
+ */
+import Arrow from "./Arrow.astro";
+
+interface Props {
+  direction?: "right" | "up-right" | "down";
+  class?: string;
+}
+
+const { direction = "right", class: className } = Astro.props;
+---
+
+<span class:list={["swap", `swap--${direction}`, className]} aria-hidden="true">
+  <span class="swap__track">
+    <Arrow direction={direction} class="swap__arrow" />
+    <Arrow direction={direction} class="swap__arrow swap__arrow--next" />
+  </span>
+</span>
+
+<style>
+  .swap {
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: 1em;
+    height: 1em;
+    overflow: hidden;
+    vertical-align: -0.12em;
+  }
+
+  .swap__track {
+    position: absolute;
+    inset: 0;
+    transition: transform 520ms var(--ease-out-expo);
+  }
+
+  .swap :global(.swap__arrow) {
+    position: absolute;
+    inset: 0.04em;
+    width: 0.92em;
+    height: 0.92em;
+  }
+
+  /* The replacement waits one step "behind" the arrow's direction. */
+  .swap--right :global(.swap__arrow--next) {
+    transform: translateX(-110%);
+  }
+
+  .swap--up-right :global(.swap__arrow--next) {
+    transform: translate(-110%, 110%);
+  }
+
+  .swap--down :global(.swap__arrow--next) {
+    transform: translateY(-110%);
+  }
+
+  @media (hover: hover) {
+    :global(.swap-trigger:hover) .swap--right .swap__track {
+      transform: translateX(110%);
+    }
+
+    :global(.swap-trigger:hover) .swap--up-right .swap__track {
+      transform: translate(110%, -110%);
+    }
+
+    :global(.swap-trigger:hover) .swap--down .swap__track {
+      transform: translateY(110%);
+    }
+  }
+
+  :global(.swap-trigger:focus-visible) .swap--right .swap__track {
+    transform: translateX(110%);
+  }
+
+  :global(.swap-trigger:focus-visible) .swap--up-right .swap__track {
+    transform: translate(110%, -110%);
+  }
+
+  :global(.swap-trigger:focus-visible) .swap--down .swap__track {
+    transform: translateY(110%);
+  }
+</style>

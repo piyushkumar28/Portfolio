@@ -1,11 +1,12 @@
 /*
  * Design tokens.
  *
- * Palette: four brand colours, each with the tints needed to stay legible.
+ * Palette: a two-tone foundation with three small accents, each with one job.
  *   Ivory  — paper. Reading sections, the hero.
  *   Ink    — deep navy-charcoal. Text on paper; statement sections in reverse.
- *   Sage   — muted green. Identity marks (labels, indices) and learning/growth sections.
  *   Cobalt — action. Buttons, links and focus — never decoration.
+ *   Copper — signature. At most a few marks on the whole page.
+ *   Sage   — quiet. Small labels and indices only.
  *
  * Components only use the semantic layer (bg, fg, mark, accent, action, …).
  * A section's [data-tone] re-maps it: "paper" (default), "ink" or "sage".
@@ -29,13 +30,16 @@
   --color-cobalt: #315f98; /* action on ivory, 5.83:1 */
   --color-cobalt-deep: #26497a; /* action/links on sage, 4.89:1 */
   --color-cobalt-light: #8fb0dd; /* action/links on ink, 7.32:1 */
+  --color-copper: #b77a4b; /* signature on ivory — large/graphic use only, 3.18:1 */
+  --color-copper-light: #c48a5a; /* signature on ink, 5.54:1 */
 
   /* ---------- Semantic (default tone: paper) ---------- */
   --color-bg: var(--color-ivory);
   --color-surface: var(--color-stone);
   --color-fg: var(--color-ink);
   --color-fg-muted: var(--color-slate);
-  --color-mark: var(--color-sage-deep); /* labels, indices, small identity details */
+  --color-mark: var(--color-sage-deep); /* labels, indices */
+  --color-signature: var(--color-copper);
   --color-accent: var(--color-cobalt); /* links, focus, interactive text */
   --color-action: var(--color-cobalt); /* primary button fill */
   --color-on-action: var(--color-ivory);
@@ -89,6 +93,7 @@
 
   /* ---------- Motion ---------- */
   --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
@@ -131,6 +136,7 @@
   --color-fg: var(--color-ivory); /* 14.6:1 */
   --color-fg-muted: var(--color-mist);
   --color-mark: var(--color-sage-light);
+  --color-signature: var(--color-copper-light);
   --color-accent: var(--color-cobalt-light);
   --color-action: var(--color-cobalt-light);
   --color-on-action: var(--color-ink);

@@ -6,27 +6,45 @@ import { contactHref, site } from "@/data/site";
 ---
 
 <section class="hero grid-editorial" data-tone="paper" aria-labelledby="hero-title">
-  <p class="hero__eyebrow label enter-rise" style="--delay: 60ms">
-    {site.role}
-    <span class="hero__eyebrow-rule" aria-hidden="true"></span>
+  {/* Load choreography (ms after fonts are ready):
+       0 eyebrow · 80 line 1 · 200 line 2 · 300 portrait emerges · 520 intro
+       640 actions · 760 band · 950 the copper full stop lands */}
+  <p class="hero__eyebrow label">
+    <span data-enter="rise">{site.role}</span>
+    <span
+      class="hero__eyebrow-rule"
+      data-enter="draw"
+      style="--delay: 180ms"
+      aria-hidden="true"
+    ></span>
   </p>
 
   <h1 id="hero-title" class="hero__title font-display text-display">
-    <span class="hero__line enter-rise" style="--delay: 120ms">
-      Curious by nature.
+    <span class="hero__line">
+      <span class="hero__line-inner" data-enter="mask" style="--delay: 80ms">
+        Curious by nature.
+      </span>
     </span>{" "}
-    <span class="hero__line hero__line--indent enter-rise" style="--delay: 200ms">
-      Driven by <em>problems.</em>
+    <span class="hero__line hero__line--indent">
+      <span class="hero__line-inner" data-enter="mask" style="--delay: 200ms">
+        Driven by{" "}
+        <em>
+          problems
+          <span class="hero__stop" data-enter="stamp" style="--delay: 950ms">
+            .
+          </span>
+        </em>
+      </span>
     </span>
   </h1>
 
   <div class="hero__body">
-    <p class="hero__intro text-lead enter-rise" style="--delay: 320ms">
+    <p class="hero__intro text-lead" data-enter="rise" style="--delay: 520ms">
       I’m {site.name}, a Software Engineer who enjoys solving problems, exploring new technologies,
       and finding better ways to turn ideas into something useful.
     </p>
 
-    <div class="hero__actions enter-rise" style="--delay: 400ms">
+    <div class="hero__actions" data-enter="rise" style="--delay: 640ms">
       <Button href="#work" arrow="right">
         View My Work
       </Button>
@@ -36,7 +54,7 @@ import { contactHref, site } from "@/data/site";
     </div>
   </div>
 
-  <HeroPortrait class="hero__portrait enter-settle" style="--delay: 160ms" />
+  <HeroPortrait class="hero__portrait" />
 
   <HeroFolio class="hero__folio" />
 </section>
@@ -85,9 +103,17 @@ import { contactHref, site } from "@/data/site";
     text-wrap: wrap;
   }
 
+  /* Each line is its own baseline mask: the inner text rises into it. The clip
+     is extended past the line box so ascenders, descenders and the italic
+     overhang are never cut once settled. */
   .hero__line {
     display: block;
     grid-column: content;
+    clip-path: inset(-0.4em -0.6em -0.34em -0.3em);
+  }
+
+  .hero__line-inner {
+    display: block;
   }
 
   .hero__line--indent {
@@ -98,6 +124,12 @@ import { contactHref, site } from "@/data/site";
     font-style: italic;
     font-weight: 360;
     letter-spacing: -0.02em;
+  }
+
+  /* Signature: the headline's last full stop, in copper. It lands last. */
+  .hero__stop {
+    display: inline-block;
+    color: var(--color-signature);
   }
 
   .hero__body {

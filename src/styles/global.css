@@ -123,44 +123,93 @@
 
 /* ------------------------------------------------------------------ */
 /* Motion                                                              */
+/*                                                                     */
+/* One vocabulary: type rises from its baseline, rules draw from the   */
+/* left, the portrait emerges from the band it stands on.              */
+/*                                                                     */
+/* Load choreography — [data-enter="rise|mask|draw|emerge|stamp"]:     */
+/* runs only with JS (html.js) and starts once fonts are in            */
+/* (html.is-ready), so type never swaps faces mid-reveal. Without JS   */
+/* everything is static and visible.                                   */
 /* ------------------------------------------------------------------ */
 
-/* Hero entrance: CSS-only so it never waits on JavaScript. */
-@keyframes rise {
+@keyframes enter-rise {
   from {
     opacity: 0;
-    transform: translate3d(0, 0.875rem, 0);
+    transform: translate3d(0, 0.75rem, 0);
+  }
+}
+
+/* Used on the inner span of a line whose wrapper clips at the baseline. */
+@keyframes enter-mask {
+  from {
+    transform: translate3d(0, calc(100% + 0.55em), 0);
+  }
+}
+
+@keyframes enter-draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes enter-emerge {
+  from {
+    clip-path: inset(100% 0 0 0);
+    transform: translate3d(0, 7%, 0);
   }
   to {
-    opacity: 1;
+    clip-path: inset(0 0 0 0);
     transform: none;
   }
 }
 
-@keyframes settle {
+@keyframes enter-stamp {
   from {
     opacity: 0;
-    transform: scale(1.025);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+    transform: translate3d(0, -0.14em, 0);
   }
 }
 
-@utility enter-rise {
-  animation: rise var(--dur-slow) var(--ease-editorial) both;
-  animation-delay: var(--delay, 0ms);
-}
-
-@utility enter-settle {
-  animation: settle 1100ms var(--ease-editorial) both;
-  animation-delay: var(--delay, 0ms);
-}
-
-/* Scroll reveal: only hides content once JS is confirmed (html.js),
-   so the page is fully readable without JavaScript. */
 @layer components {
+  .js [data-enter] {
+    animation-duration: var(--enter-dur, var(--dur-slow));
+    animation-timing-function: var(--ease-out-expo);
+    animation-fill-mode: both;
+    animation-delay: var(--delay, 0ms);
+    animation-play-state: paused;
+  }
+
+  .js.is-ready [data-enter] {
+    animation-play-state: running;
+  }
+
+  .js [data-enter="rise"] {
+    animation-name: enter-rise;
+  }
+
+  .js [data-enter="mask"] {
+    --enter-dur: 1050ms;
+    animation-name: enter-mask;
+  }
+
+  .js [data-enter="draw"] {
+    --enter-dur: 900ms;
+    animation-name: enter-draw;
+    transform-origin: left center;
+  }
+
+  .js [data-enter="emerge"] {
+    --enter-dur: 1400ms;
+    animation-name: enter-emerge;
+  }
+
+  .js [data-enter="stamp"] {
+    --enter-dur: 700ms;
+    animation-name: enter-stamp;
+  }
+
+  /* Scroll reveal: hidden only once JS is confirmed. */
   [data-reveal] {
     transition:
       opacity var(--dur-slow) var(--ease-editorial),
@@ -182,6 +231,10 @@
     animation-delay: 0ms !important;
     transition-duration: 1ms !important;
     transition-delay: 0ms !important;
+  }
+
+  .js [data-enter] {
+    animation: none !important;
   }
 
   .js [data-reveal]:not(.is-revealed) {

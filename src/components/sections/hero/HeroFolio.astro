@@ -6,7 +6,7 @@
  * Place it on the editorial grid spanning `full` (edge to edge).
  */
 import type { HTMLAttributes } from "astro/types";
-import Arrow from "@/components/ui/Arrow.astro";
+import ArrowSwap from "@/components/ui/ArrowSwap.astro";
 import { site } from "@/data/site";
 
 type Props = HTMLAttributes<"div">;
@@ -15,7 +15,7 @@ const { class: className, ...rest } = Astro.props;
 ---
 
 <div class:list={["folio", className]} data-tone="ink" {...rest}>
-  <div class="folio__availability enter-rise" style="--delay: 520ms">
+  <div class="folio__availability" data-enter="rise" style="--delay: 760ms">
     <span class="folio__mark" aria-hidden="true"></span>
     <ul role="list" class="folio__list">
       {site.availability.map((item) => (
@@ -24,9 +24,14 @@ const { class: className, ...rest } = Astro.props;
     </ul>
   </div>
 
-  <a href="#about" class="folio__scroll label enter-rise" style="--delay: 600ms">
+  <a
+    href="#about"
+    class="folio__scroll label swap-trigger"
+    data-enter="rise"
+    style="--delay: 840ms"
+  >
     Scroll to explore
-    <Arrow direction="down" class="folio__arrow" />
+    <ArrowSwap direction="down" class="folio__arrow" />
   </a>
 </div>
 
@@ -47,6 +52,15 @@ const { class: className, ...rest } = Astro.props;
     height: 1px;
     margin-top: 0.5rem;
     background-color: var(--color-rule);
+    transform-origin: left center;
+  }
+
+  :global(.js) .folio::after {
+    animation: enter-draw 1200ms var(--ease-out-expo) 800ms both paused;
+  }
+
+  :global(.js.is-ready) .folio::after {
+    animation-play-state: running;
   }
 
   .folio__availability {
@@ -58,11 +72,12 @@ const { class: className, ...rest } = Astro.props;
     line-height: var(--text-small--line-height);
   }
 
+  /* Signature: the one copper mark in the band. */
   .folio__mark {
     flex: none;
     width: 0.4375rem;
     height: 0.4375rem;
-    background-color: var(--color-mark);
+    background-color: var(--color-signature);
     transform: translateY(-0.0625rem);
   }
 
@@ -81,18 +96,30 @@ const { class: className, ...rest } = Astro.props;
     transition: color var(--dur-fast) var(--ease-editorial);
   }
 
-  .folio__scroll:hover {
+  .folio__scroll:hover,
+  .folio__scroll:focus-visible {
     color: var(--color-fg);
   }
 
   .folio__scroll :global(.folio__arrow) {
-    width: 0.875rem;
-    height: 0.875rem;
-    transition: transform var(--dur-fast) var(--ease-editorial);
+    font-size: 0.875rem;
   }
 
-  .folio__scroll:hover :global(.folio__arrow) {
-    transform: translateY(0.2rem);
+  /* Once the hero has settled, the arrow makes a single downward pass. */
+  :global(.js.is-ready) .folio__scroll :global(.swap__track) {
+    animation: folio-nudge 1100ms var(--ease-out-expo) 2400ms 1;
+  }
+
+  @keyframes folio-nudge {
+    0% {
+      transform: none;
+    }
+    99.9% {
+      transform: translateY(110%);
+    }
+    100% {
+      transform: none;
+    }
   }
 
   @media (min-width: 48rem) {
@@ -121,6 +148,13 @@ const { class: className, ...rest } = Astro.props;
       grid-row: 1;
       justify-self: end;
       min-height: 2.75rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .folio::after,
+    :global(.js.is-ready) .folio__scroll :global(.swap__track) {
+      animation: none;
     }
   }
 </style>

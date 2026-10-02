@@ -1,9 +1,12 @@
 /**
- * Reveals [data-reveal] elements as they enter the viewport.
+ * Adds `is-revealed` as elements enter the viewport.
+ *  - [data-reveal]: fades/rises in (styles in global.css);
+ *  - [data-inview]: no styling of its own — lets components start an
+ *    entrance only once it can be seen.
  * Elements are only hidden when <html> has the `js` class (set inline in <head>),
  * and reduced-motion users get them immediately via CSS.
  */
-const elements = document.querySelectorAll<HTMLElement>("[data-reveal]");
+const elements = document.querySelectorAll<HTMLElement>("[data-reveal], [data-inview]");
 
 if (!("IntersectionObserver" in window)) {
   elements.forEach((el) => el.classList.add("is-revealed"));

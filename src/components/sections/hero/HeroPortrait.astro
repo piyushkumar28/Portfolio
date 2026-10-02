@@ -4,12 +4,20 @@ import portrait from "@/assets/images/portrait/portrait.jpg";
 
 /**
  * The portrait is shown unedited. Its studio-white background is blended into the
- * page with `multiply`: white takes on the page tone, everything else is
- * effectively unchanged. This avoids a bright white rectangle sitting on the
- * ivory page, without cutting out or retouching the photograph.
+ * page with `multiply`: white takes on the paper tone, everything else is
+ * effectively unchanged. It must therefore only ever sit on paper.
  *
- * The wrapper paints the page colour itself, so the blend stays correct even when
- * an entrance animation briefly isolates it in its own stacking context.
+ * Motion — the band below is its floor:
+ *  - entrance: it rises out of the band (clip from the bottom + a short lift),
+ *    once fonts are ready and the figure is on screen;
+ *  - scroll: over the first screen it sinks ~9% behind the band, a slower
+ *    drift than the page (CSS scroll timeline; skipped where unsupported or
+ *    when reduced motion is requested).
+ *
+ * Both wrappers paint the page colour themselves: the figure and the <picture>
+ * become isolated stacking contexts while animating (and the scroll timeline
+ * keeps <picture> transformed), so the multiply must always have paper directly
+ * behind it — otherwise the white background would show as a box.
  */
 import type { HTMLAttributes } from "astro/types";
 
@@ -18,7 +26,7 @@ type Props = HTMLAttributes<"figure">;
 const { class: className, ...rest } = Astro.props;
 ---
 
-<figure class:list={["portrait", className]} {...rest}>
+<figure class:list={["portrait", className]} data-inview {...rest}>
   <Picture
     src={portrait}
     formats={["avif", "webp"]}
@@ -27,6 +35,8 @@ const { class: className, ...rest } = Astro.props;
     alt="Portrait of Piyush Kumar"
     priority
     class="portrait__img"
+    data-enter="emerge"
+    style="--delay: 300ms"
   />
 </figure>
 
@@ -39,6 +49,7 @@ const { class: className, ...rest } = Astro.props;
 
   .portrait :global(picture) {
     display: block;
+    background-color: var(--color-bg);
   }
 
   .portrait__img {
@@ -46,5 +57,30 @@ const { class: className, ...rest } = Astro.props;
     width: 100%;
     height: auto;
     mix-blend-mode: multiply;
+  }
+
+  /* Off-screen on load (phones): hold the entrance until it is in view. */
+  :global(.js) .portrait:not(.is-revealed) .portrait__img {
+    animation-play-state: paused;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      /* Longhands on purpose: `animation-timeline` is reset-only in the
+         shorthand, and a minifier must not fold it back into one. */
+      .portrait :global(picture) {
+        animation-name: portrait-sink;
+        animation-timing-function: linear;
+        animation-fill-mode: both;
+        animation-timeline: scroll(root block);
+        animation-range: 0 100vh;
+      }
+    }
+  }
+
+  @keyframes portrait-sink {
+    to {
+      transform: translate3d(0, 9%, 0);
+    }
   }
 </style>

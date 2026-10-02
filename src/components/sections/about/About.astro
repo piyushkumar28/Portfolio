@@ -6,7 +6,7 @@ import AboutPillar from "./AboutPillar.astro";
 const pillars = [
   {
     title: "Problem Solving",
-    text: "I start with the problem, not the tool. Breaking something complicated into smaller, clearer questions is where most of my progress happens\u00a0— and the best answer is often the simplest one that works.",
+    text: "I start with the problem, not the tool. Breaking something complicated into smaller, clearer questions is where most of my progress happens — and the best answer is often the simplest one that works.",
   },
   {
     title: "Continuous Learning",
@@ -19,7 +19,7 @@ const pillars = [
 ];
 ---
 
-<Section id="about" labelledBy="about-title" tone="ink" pad="top">
+<Section id="about" labelledBy="about-title" tone="ink">
   <div class="about grid-editorial">
     <SectionHeader label="About" titleId="about-title">
       <span class="about__title-line">Always learning.</span>{" "}
@@ -37,10 +37,8 @@ const pillars = [
         properly, learn what it asks of me, and build something that holds up.
       </p>
     </div>
-  </div>
 
-  <div class="about__principles grid-editorial" data-tone="sage">
-    <ol class="about__pillars" role="list" aria-label="What drives my work">
+    <ol class="about__pillars" role="list" aria-label="What drives my work" data-principles>
       {pillars.map((pillar, i) => (
         <AboutPillar index={i + 1} title={pillar.title}>
           {pillar.text}
@@ -50,11 +48,54 @@ const pillars = [
   </div>
 </Section>
 
-<style>
-  .about {
-    padding-bottom: var(--section-space);
-  }
+<script>
+  /*
+   * One active principle at a time:
+   *  - with a mouse, the row under the pointer;
+   *  - otherwise (touch, keyboard scrolling, or no pointer over the list) the row
+   *    crossing the middle of the screen — so the index responds while reading.
+   */
+  const list = document.querySelector<HTMLElement>("[data-principles]");
 
+  if (list && "IntersectionObserver" in window) {
+    const rows = [...list.querySelectorAll<HTMLElement>("[data-principle]")];
+    let hovered: HTMLElement | null = null;
+    let reading: HTMLElement | null = null;
+
+    const render = () => {
+      const active = hovered ?? reading;
+      rows.forEach((row) => row.classList.toggle("is-active", row === active));
+    };
+
+    rows.forEach((row) => {
+      row.addEventListener("pointerenter", (event) => {
+        if (event.pointerType !== "mouse") return;
+        hovered = row;
+        render();
+      });
+      row.addEventListener("pointerleave", (event) => {
+        if (event.pointerType !== "mouse") return;
+        hovered = null;
+        render();
+      });
+    });
+
+    const readingLine = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) reading = entry.target as HTMLElement;
+          else if (reading === entry.target) reading = null;
+        }
+        render();
+      },
+      { rootMargin: "-46% 0px -46% 0px" },
+    );
+
+    rows.forEach((row) => readingLine.observe(row));
+  }
+</script>
+
+<style>
   .about__title-line {
     display: block;
   }
@@ -77,18 +118,12 @@ const pillars = [
     color: var(--color-fg-muted);
   }
 
-  /* Sage block: the colour edge bounds it, so rules only separate pillars. */
-  .about__principles {
-    padding-block: clamp(2.5rem, 1rem + 5vw, 5.5rem);
-  }
-
   .about__pillars {
+    position: relative;
     display: grid;
     grid-template-columns: subgrid;
-  }
-
-  .about__pillars > :global(li:first-child) {
-    border-top: 0;
+    margin-top: clamp(4.5rem, 2rem + 7vw, 8.5rem);
+    border-bottom: 1px solid var(--color-rule);
   }
 
   @media (min-width: 64rem) {
