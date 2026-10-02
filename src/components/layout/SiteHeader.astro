@@ -3,7 +3,7 @@ import Arrow from "@/components/ui/Arrow.astro";
 import { contactHref, nav, site } from "@/data/site";
 ---
 
-<header class="site-header grid-editorial enter-rise" style="--delay: 0ms">
+<header class="site-header grid-editorial" data-tone="ink">
   <div class="site-header__inner">
     <a href="/" class="site-header__name" aria-label={`${site.name} — home`}>
       {site.name}
@@ -36,7 +36,6 @@ import { contactHref, nav, site } from "@/data/site";
     justify-content: space-between;
     gap: 1.5rem;
     height: var(--header-h);
-    border-bottom: 1px solid var(--color-rule);
   }
 
   .site-header__name {

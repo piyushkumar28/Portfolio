@@ -44,19 +44,44 @@ src/
 copy lives with its section; repeatable records (experience, projects, …) will
 live in content collections.
 
-## Design system
+## Design system — "Ink, Paper & Sage"
 
-- **Colour:** components use semantic tokens (`bg`, `fg`, `fg-muted`, `accent`,
-  `rule`, …). A section's `tone` (`ivory`, `stone`, `dark`) re-maps them, so
-  children never need tone-specific styles. Cobalt is reserved for interaction;
-  copper for a single signature detail.
-- **Grid:** `.grid-editorial` is a 12-column grid (6 on mobile) with full-bleed
-  outer tracks. Place items with named lines, e.g.
-  `grid-column: col-start 3 / span 4` or `col-start 9 / full-end` to bleed.
-- **Type:** fluid scale — `display`, `title`, `heading`, `standfirst`, `lead`,
-  `body`, `small`, `label`.
-- **Motion:** 400/600/800ms with one easing curve; everything respects
-  `prefers-reduced-motion`.
+**Palette.** Four colours, each with a fixed job:
+
+| Colour | Values                                     | Job                                                                 |
+| ------ | ------------------------------------------ | ------------------------------------------------------------------- |
+| Paper  | Ivory `#F5F2EB`, Stone `#ECE8DF`           | Reading sections; the hero. The portrait only ever sits on paper.   |
+| Ink    | `#16212B`, raised `#1F2B37`                | Text on paper; masthead and statement sections in reverse.          |
+| Sage   | `#B7C2AC`, deep `#4E6249`, light `#A7B99D` | Labels, indices, identity marks; full fields for learning & growth. |
+| Cobalt | `#315F98`, light `#8FB0DD`, deep `#26497A` | Action only: buttons, links, focus.                                 |
+
+**Tones.** Components use semantic tokens only (`bg`, `fg`, `fg-muted`, `mark`,
+`accent`, `action`, `on-action`, `rule`, …). A section's `tone` — `paper`
+(default), `ink` or `sage` — re-maps them, and every tone is AA-accessible on
+its own (each defines its own muted text, link and button colours).
+
+**Section rhythm.** Neighbouring sections never share a tone (the hero's ink
+band deliberately runs into About). Planned order:
+
+1. Masthead — ink
+2. Hero — paper, closing on an ink band the portrait stands on
+3. About — ink statement, then the principles on sage
+4. Experience — paper
+5. Skills & Learning — sage
+6. Projects — paper (stone)
+7. AI & Engineering — ink
+8. Research & Certifications — sage
+9. Contact & Footer — ink
+
+**Grid.** `.grid-editorial` is a 12-column grid (6 on mobile) with full-bleed
+outer tracks. Place items with named lines, e.g.
+`grid-column: col-start 3 / span 4` or `col-start 9 / full-end` to bleed.
+
+**Type.** Fluid scale — `display`, `title`, `heading`, `standfirst`, `lead`,
+`body`, `small`, `label`.
+
+**Motion.** 400/600/800ms with one easing curve; everything respects
+`prefers-reduced-motion`.
 
 ## Before launch
 

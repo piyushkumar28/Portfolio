@@ -1,12 +1,17 @@
 /*
  * Design tokens.
  *
- * Two layers:
- *   1. Palette — raw brand values. Avoid using these directly in components.
- *   2. Semantic — what components use. Re-mapped per section tone via [data-tone].
+ * Palette: four brand colours, each with the tints needed to stay legible.
+ *   Ivory  — paper. Reading sections, the hero.
+ *   Ink    — deep navy-charcoal. Text on paper; statement sections in reverse.
+ *   Sage   — muted green. Identity marks (labels, indices) and learning/growth sections.
+ *   Cobalt — action. Buttons, links and focus — never decoration.
  *
- * Tailwind's default colour and radius scales are cleared so that only the
- * portfolio's own tokens can be used.
+ * Components only use the semantic layer (bg, fg, mark, accent, action, …).
+ * A section's [data-tone] re-maps it: "paper" (default), "ink" or "sage".
+ *
+ * Tailwind's default colour and radius scales are cleared so that only these
+ * tokens can be used.
  */
 
 @theme static {
@@ -14,22 +19,29 @@
   --color-*: initial;
   --color-ivory: #f5f2eb;
   --color-stone: #ece8df;
-  --color-ink: #15171a;
-  --color-slate: #5e646b;
-  --color-cobalt: #315f98;
-  --color-copper: #b77a4b;
-  --color-dark: #17191c;
+  --color-ink: #16212b;
+  --color-ink-raised: #1f2b37;
+  --color-slate: #56606a; /* muted text on ivory, 5.73:1 */
+  --color-mist: #a3adb6; /* muted text on ink, 7.16:1 */
+  --color-sage: #b7c2ac; /* section field */
+  --color-sage-deep: #4e6249; /* marks on ivory, 5.93:1 */
+  --color-sage-light: #a7b99d; /* marks on ink, 7.83:1 */
+  --color-cobalt: #315f98; /* action on ivory, 5.83:1 */
+  --color-cobalt-deep: #26497a; /* action/links on sage, 4.89:1 */
+  --color-cobalt-light: #8fb0dd; /* action/links on ink, 7.32:1 */
 
-  /* ---------- Semantic (default tone: ivory) ---------- */
+  /* ---------- Semantic (default tone: paper) ---------- */
   --color-bg: var(--color-ivory);
   --color-surface: var(--color-stone);
   --color-fg: var(--color-ink);
-  --color-fg-muted: var(--color-slate); /* 5.35:1 on ivory, 4.89:1 on stone */
-  --color-accent: var(--color-cobalt); /* interaction + meaning only */
-  --color-signature: var(--color-copper); /* micro-details only; never small text */
-  --color-rule: rgb(21 23 26 / 0.16);
-  --color-rule-strong: rgb(21 23 26 / 0.82);
-  --color-on-fg: var(--color-ivory); /* text on solid ink fills */
+  --color-fg-muted: var(--color-slate);
+  --color-mark: var(--color-sage-deep); /* labels, indices, small identity details */
+  --color-accent: var(--color-cobalt); /* links, focus, interactive text */
+  --color-action: var(--color-cobalt); /* primary button fill */
+  --color-on-action: var(--color-ivory);
+  --color-action-hover: var(--color-ink);
+  --color-rule: rgb(22 33 43 / 0.14);
+  --color-rule-strong: rgb(22 33 43 / 0.8);
 
   /* ---------- Shape ---------- */
   --radius-*: initial;
@@ -106,25 +118,37 @@
 }
 
 /* ---------- Section tones ---------- */
+/* Every tone defines the full semantic set; contrast ratios are against its bg. */
+
 [data-tone] {
   background-color: var(--color-bg);
   color: var(--color-fg);
 }
 
-[data-tone="stone"] {
-  --color-bg: var(--color-stone);
-  --color-surface: var(--color-ivory);
+[data-tone="ink"] {
+  --color-bg: var(--color-ink);
+  --color-surface: var(--color-ink-raised);
+  --color-fg: var(--color-ivory); /* 14.6:1 */
+  --color-fg-muted: var(--color-mist);
+  --color-mark: var(--color-sage-light);
+  --color-accent: var(--color-cobalt-light);
+  --color-action: var(--color-cobalt-light);
+  --color-on-action: var(--color-ink);
+  --color-action-hover: var(--color-ivory);
+  --color-rule: rgb(245 242 235 / 0.14);
+  --color-rule-strong: rgb(245 242 235 / 0.6);
 }
 
-/* Reserved for a later section. Slate and cobalt fail contrast on Deep Dark,
-   so this tone uses lightened variants (6.67:1 and 6.79:1). */
-[data-tone="dark"] {
-  --color-bg: var(--color-dark);
-  --color-surface: #202327;
-  --color-fg: var(--color-ivory);
-  --color-fg-muted: #9aa0a6;
-  --color-accent: #7fa3d4;
-  --color-rule: rgb(245 242 235 / 0.16);
-  --color-rule-strong: rgb(245 242 235 / 0.82);
-  --color-on-fg: var(--color-dark);
+[data-tone="sage"] {
+  --color-bg: var(--color-sage);
+  --color-surface: #c5cdba;
+  --color-fg: var(--color-ink); /* 8.8:1 */
+  --color-fg-muted: #3e4a50; /* 4.92:1 */
+  --color-mark: #34452f;
+  --color-accent: var(--color-cobalt-deep);
+  --color-action: var(--color-ink);
+  --color-on-action: var(--color-ivory);
+  --color-action-hover: var(--color-cobalt-deep);
+  --color-rule: rgb(22 33 43 / 0.18);
+  --color-rule-strong: rgb(22 33 43 / 0.8);
 }

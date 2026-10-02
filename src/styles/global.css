@@ -43,9 +43,10 @@
     text-wrap: pretty;
   }
 
+  /* Inverts within every tone. */
   ::selection {
-    background-color: var(--color-ink);
-    color: var(--color-ivory);
+    background-color: var(--color-fg);
+    color: var(--color-bg);
   }
 
   :focus-visible {

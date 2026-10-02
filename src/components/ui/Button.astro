@@ -3,8 +3,9 @@ import Arrow from "./Arrow.astro";
 
 /**
  * Link-styled actions. Every CTA on the site is navigation, so this always renders <a>.
- *  - primary: solid ink block; the arrow advances on hover.
- *  - text:    understated link whose hairline underline redraws on hover.
+ * Colours come from the section tone's action/accent tokens.
+ *  - primary: solid action fill; the arrow advances on hover.
+ *  - text:    understated link with an accent underline that redraws on hover.
  */
 interface Props {
   href: string;
@@ -47,14 +48,14 @@ const { href, variant = "primary", arrow, class: className, ...rest } = Astro.pr
   .btn--primary {
     min-height: 3.375rem;
     padding-inline: 1.625rem 1.5rem;
-    background-color: var(--color-fg);
-    color: var(--color-on-fg);
+    background-color: var(--color-action);
+    color: var(--color-on-action);
     border-radius: var(--radius-sm);
     transition: background-color var(--dur-fast) var(--ease-editorial);
   }
 
   .btn--primary:hover {
-    background-color: var(--color-accent);
+    background-color: var(--color-action-hover);
   }
 
   /* Text ------------------------------------------------------------- */
@@ -65,7 +66,7 @@ const { href, variant = "primary", arrow, class: className, ...rest } = Astro.pr
   }
 
   .btn--text .btn__label {
-    background-image: linear-gradient(currentColor, currentColor);
+    background-image: linear-gradient(var(--color-accent), var(--color-accent));
     background-size: 100% 1px;
     background-position: 0 100%;
     background-repeat: no-repeat;

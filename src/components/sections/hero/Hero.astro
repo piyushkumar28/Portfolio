@@ -5,7 +5,7 @@ import HeroPortrait from "./HeroPortrait.astro";
 import { contactHref, site } from "@/data/site";
 ---
 
-<section class="hero grid-editorial" aria-labelledby="hero-title">
+<section class="hero grid-editorial" data-tone="paper" aria-labelledby="hero-title">
   <p class="hero__eyebrow label enter-rise" style="--delay: 60ms">
     {site.role}
     <span class="hero__eyebrow-rule" aria-hidden="true"></span>
@@ -38,7 +38,7 @@ import { contactHref, site } from "@/data/site";
 
   <HeroPortrait class="hero__portrait enter-settle" style="--delay: 160ms" />
 
-  <HeroFolio class="hero__folio enter-rise" style="--delay: 520ms" />
+  <HeroFolio class="hero__folio" />
 </section>
 
 <style>
@@ -47,7 +47,9 @@ import { contactHref, site } from "@/data/site";
    * - The portrait's subject occupies ~23%–74% of the image width and starts
    *   7% from its top. On desktop, the headline's second line is sized so it
    *   ends before the head; nothing ever overlaps the face.
-   * - The portrait stands on the folio rule and bleeds off the right edge.
+   * - The portrait stands on the ink folio band and bleeds off the right
+   *   edge. Its white background is multiplied into the paper tone, so it must
+   *   only ever sit on paper — never over the ink band.
    */
 
   /* ---------------------------------------------------------------- */
@@ -58,7 +60,6 @@ import { contactHref, site } from "@/data/site";
     --text-display: clamp(3rem, 15vw, 5.5rem);
     position: relative;
     padding-top: clamp(2.5rem, 1rem + 5vw, 4rem);
-    padding-bottom: 1.25rem;
     overflow-x: clip;
   }
 
@@ -66,7 +67,7 @@ import { contactHref, site } from "@/data/site";
     display: flex;
     align-items: center;
     gap: 0.875rem;
-    color: var(--color-fg-muted);
+    color: var(--color-mark);
   }
 
   .hero__eyebrow-rule {
@@ -126,7 +127,7 @@ import { contactHref, site } from "@/data/site";
   .hero__folio {
     position: relative;
     z-index: 2;
-    grid-column: content-start / full-end;
+    grid-column: full;
   }
 
   /* ---------------------------------------------------------------- */
@@ -138,7 +139,6 @@ import { contactHref, site } from "@/data/site";
     .hero {
       --text-display: 9.4vw;
       grid-template-rows: auto auto 1fr auto;
-      padding-bottom: 1.75rem;
     }
 
     .hero__eyebrow {
@@ -187,7 +187,6 @@ import { contactHref, site } from "@/data/site";
       min-height: calc(100svh - var(--header-h));
       grid-template-rows: auto auto minmax(2rem, 1fr) auto auto;
       padding-top: clamp(2.5rem, 0.5rem + 3.5vw, 4.5rem);
-      padding-bottom: 2rem;
     }
 
     .hero__title {
