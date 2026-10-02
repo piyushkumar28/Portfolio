@@ -1,0 +1,31 @@
+---
+import { getCollection } from "astro:content";
+import Section from "@/components/layout/Section.astro";
+import SectionHeader from "@/components/layout/SectionHeader.astro";
+import ExperienceRole from "./ExperienceRole.astro";
+
+const roles = (await getCollection("experience")).sort((a, b) => b.data.start - a.data.start);
+---
+
+<Section id="experience" labelledBy="experience-title">
+  <div class="experience grid-editorial">
+    <SectionHeader label="Experience" titleId="experience-title">
+      The work so far.
+    </SectionHeader>
+
+    <div class="experience__roles">
+      {roles.map((entry) => (
+        <ExperienceRole entry={entry} />
+      ))}
+    </div>
+  </div>
+</Section>
+
+<style>
+  .experience__roles {
+    display: grid;
+    grid-template-columns: subgrid;
+    row-gap: var(--section-space);
+    margin-top: clamp(3.5rem, 2rem + 5vw, 7rem);
+  }
+</style>

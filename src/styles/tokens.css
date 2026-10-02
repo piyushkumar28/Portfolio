@@ -55,7 +55,9 @@
   /* ---------- Type scale (fluid) ----------
    * display    hero headline (serif)
    * title      section headings (serif)
+   * headline   role titles (serif)
    * heading    sub-headings, pillar titles (serif)
+   * subheading small serif headings: areas, skill groups
    * standfirst editorial intro paragraph (serif)
    * lead       larger body copy (sans)
    * body       default body copy (sans)
@@ -70,9 +72,17 @@
   --text-title--line-height: 0.98;
   --text-title--letter-spacing: -0.026em;
 
+  --text-headline: clamp(2.125rem, 1.4rem + 2.6vw, 3.875rem);
+  --text-headline--line-height: 1.02;
+  --text-headline--letter-spacing: -0.022em;
+
   --text-heading: clamp(1.75rem, 1.35rem + 1.3vw, 2.625rem);
   --text-heading--line-height: 1.08;
   --text-heading--letter-spacing: -0.018em;
+
+  --text-subheading: clamp(1.375rem, 1.22rem + 0.5vw, 1.6875rem);
+  --text-subheading--line-height: 1.15;
+  --text-subheading--letter-spacing: -0.012em;
 
   --text-standfirst: clamp(1.4375rem, 1.18rem + 0.95vw, 2.125rem);
   --text-standfirst--line-height: 1.28;

@@ -1,0 +1,324 @@
+---
+/**
+ * Skills & Learning, on ink. Groups are named by what the tools are for; there
+ * are no levels or percentages. Tools used in the current role carry the
+ * copper square (the site's mark for "now"), derived from the experience
+ * collection so the two sections can never disagree. Everything else is
+ * presented as projects and self-directed learning.
+ *
+ * A switch highlights the current-role tools: the others step back to the
+ * muted tone (still AA) and a copper line draws under each highlighted name.
+ */
+import { getCollection } from "astro:content";
+import Section from "@/components/layout/Section.astro";
+import SectionHeader from "@/components/layout/SectionHeader.astro";
+import { skillGroups } from "@/data/skills";
+
+const roles = await getCollection("experience");
+const currentTools = new Set(
+  roles
+    .filter((entry) => entry.data.end === null)
+    .flatMap((entry) => entry.data.areas.flatMap((area) => area.tools)),
+);
+---
+
+<Section id="skills" labelledBy="skills-title" tone="ink">
+  <div class="skills grid-editorial">
+    <SectionHeader label="Skills & Learning" titleId="skills-title">
+      A toolkit that keeps growing.
+    </SectionHeader>
+
+    <div class="skills__intro">
+      <p class="skills__standfirst font-display text-standfirst" data-reveal>
+        I learn tools by building with them. Some are part of my day-to-day work; the rest come from
+        projects and the habit of exploring what comes next.
+      </p>
+
+      <div class="skills__key" data-reveal style="--delay: 90ms">
+        <p class="skills__legend">
+          <span class="skills__square" aria-hidden="true"></span>
+          Used in my current role. Everything else: projects and self-directed learning.
+        </p>
+        <button
+          type="button"
+          class="skills__switch"
+          role="switch"
+          aria-checked="false"
+          aria-controls="skill-groups"
+          data-skills-switch
+          hidden
+        >
+          <span class="skills__track" aria-hidden="true">
+            <span class="skills__thumb"></span>
+          </span>
+          <span class="skills__switch-label">Highlight them</span>
+        </button>
+      </div>
+    </div>
+
+    <ul id="skill-groups" class="skills__groups" role="list" data-skill-groups>
+      {skillGroups.map((group, i) => (
+        <li class="group" data-reveal style={`--delay: ${(i % 3) * 90}ms`}>
+          <h3 class="group__name font-display text-subheading">{group.name}</h3>
+          <p class="group__text">{group.description}</p>
+          <ul class="group__tools" role="list">
+            {group.tools.map((tool) => {
+              const current = currentTools.has(tool);
+              return (
+                <li class:list={["tool", { "is-current": current }]}>
+                  <span class="tool__name">{tool}</span>
+                  {current && (
+                    <>
+                      <span class="tool__mark" aria-hidden="true" />
+                      <span class="sr-only">(used in my current role)</span>
+                    </>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  </div>
+</Section>
+
+<script>
+  // The switch only exists with JS; without it the legend alone explains the marks.
+  const toggle = document.querySelector<HTMLButtonElement>("[data-skills-switch]");
+  const groups = document.querySelector<HTMLElement>("[data-skill-groups]");
+
+  if (toggle && groups) {
+    toggle.hidden = false;
+    toggle.addEventListener("click", () => {
+      const on = toggle.getAttribute("aria-checked") !== "true";
+      toggle.setAttribute("aria-checked", String(on));
+      groups.classList.toggle("is-highlighting", on);
+    });
+  }
+</script>
+
+<style>
+  .skills__intro {
+    display: grid;
+    grid-template-columns: subgrid;
+    row-gap: 2rem;
+    margin-top: 2.5rem;
+  }
+
+  .skills__standfirst,
+  .skills__key {
+    grid-column: content;
+  }
+
+  .skills__standfirst {
+    max-width: 32ch;
+  }
+
+  /* Legend + switch ----------------------------------------------------- */
+  .skills__key {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 2rem;
+  }
+
+  .skills__legend {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    max-width: 44ch;
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+    color: var(--color-fg-muted);
+  }
+
+  .skills__square,
+  .tool__mark {
+    flex: none;
+    width: 0.4375rem;
+    height: 0.4375rem;
+    background-color: var(--color-signature);
+  }
+
+  .skills__switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-fg);
+    font: inherit;
+    font-size: var(--text-small);
+    font-weight: 500;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* A hairline track; the copper square slides across when on. */
+  .skills__track {
+    position: relative;
+    width: 2.25rem;
+    height: 1.125rem;
+    border: 1px solid var(--color-rule-strong);
+    border-radius: 999px;
+    transition: border-color var(--dur-fast) var(--ease-editorial);
+  }
+
+  .skills__thumb {
+    position: absolute;
+    top: 50%;
+    left: 0.25rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: var(--color-fg-muted);
+    transform: translateY(-50%);
+    transition:
+      transform var(--dur-base) var(--ease-out-expo),
+      background-color var(--dur-fast) var(--ease-editorial);
+  }
+
+  .skills__switch-label {
+    position: relative;
+    padding-block: 0.3125rem;
+  }
+
+  .skills__switch-label::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 1px;
+    background-color: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: right center;
+    transition: transform var(--dur-base) var(--ease-out-expo);
+  }
+
+  @media (hover: hover) {
+    .skills__switch:hover .skills__switch-label::after {
+      transform: scaleX(1);
+      transform-origin: left center;
+    }
+  }
+
+  .skills__switch:focus-visible .skills__switch-label::after {
+    transform: scaleX(1);
+    transform-origin: left center;
+  }
+
+  .skills__switch[aria-checked="true"] .skills__track {
+    border-color: var(--color-signature);
+  }
+
+  .skills__switch[aria-checked="true"] .skills__thumb {
+    background-color: var(--color-signature);
+    transform: translate(1.125rem, -50%);
+  }
+
+  /* Groups ------------------------------------------------------------ */
+  .skills__groups {
+    display: grid;
+    grid-template-columns: subgrid;
+    row-gap: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+    margin-top: clamp(4rem, 2rem + 6vw, 7.5rem);
+  }
+
+  .group {
+    position: relative;
+    grid-column: content;
+    padding-top: 1.5rem;
+  }
+
+  /* Each group opens on a rule that draws in as the group is revealed. */
+  .group::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background-color: var(--color-rule);
+    transform-origin: left center;
+    transition: transform 1100ms var(--ease-out-expo);
+    transition-delay: calc(var(--delay, 0ms) + 120ms);
+  }
+
+  :global(.js) .group:not(.is-revealed)::before {
+    transform: scaleX(0);
+  }
+
+  .group__text {
+    margin-top: 0.625rem;
+    max-width: 34ch;
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+    color: var(--color-fg-muted);
+  }
+
+  .group__tools {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--col-gap);
+    margin-top: 1.25rem;
+  }
+
+  .tool {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-width: 0;
+    padding-block: 0.3125rem;
+    color: var(--color-fg);
+    transition: color var(--dur-base) var(--ease-editorial);
+  }
+
+  .tool__name {
+    min-width: 0;
+    background-image: linear-gradient(var(--color-signature), var(--color-signature));
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% 1px;
+    padding-bottom: 0.125rem;
+    transition: background-size var(--dur-slow) var(--ease-out-expo);
+  }
+
+  /* Highlighting: the rest step back (mist on ink is still 7:1). */
+  .skills__groups.is-highlighting .tool:not(.is-current) {
+    color: var(--color-fg-muted);
+  }
+
+  .skills__groups.is-highlighting .tool.is-current .tool__name {
+    background-size: 100% 1px;
+  }
+
+  @media (min-width: 48rem) {
+    .group {
+      grid-column: span 6;
+    }
+
+    .group__tools {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .skills__intro {
+      margin-top: 3.5rem;
+    }
+
+    .skills__standfirst,
+    .skills__key {
+      grid-column: col-start 4 / content-end;
+    }
+
+    .group {
+      grid-column: span 4;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .group:not(.is-revealed)::before {
+      transform: none;
+    }
+  }
+</style>

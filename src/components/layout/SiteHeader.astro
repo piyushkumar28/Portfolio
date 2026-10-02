@@ -1,4 +1,10 @@
 ---
+/**
+ * Ink masthead. From tablet up the sections are listed inline; on phones they
+ * move into a full-screen menu (a modal <dialog>: focus is contained, Escape
+ * closes it, the page behind is inert) and only "Let’s Talk" stays visible.
+ */
+import ArrowSwap from "@/components/ui/ArrowSwap.astro";
 import Button from "@/components/ui/Button.astro";
 import { contactHref, nav, site } from "@/data/site";
 ---
@@ -12,7 +18,7 @@ import { contactHref, nav, site } from "@/data/site";
     <nav aria-label="Primary">
       <ul role="list" class="site-header__nav">
         {nav.map((item) => (
-          <li>
+          <li class="site-header__section">
             <Button href={item.href} variant="quiet">
               {item.label}
             </Button>
@@ -23,10 +29,76 @@ import { contactHref, nav, site } from "@/data/site";
             Let’s Talk
           </Button>
         </li>
+        <li class="site-header__menu-item">
+          <button
+            type="button"
+            class="site-header__menu"
+            aria-haspopup="dialog"
+            aria-controls="site-menu"
+            data-menu-open
+          >
+            Menu
+          </button>
+        </li>
       </ul>
     </nav>
   </div>
 </header>
+
+<dialog id="site-menu" class="menu" data-tone="ink" aria-label="Menu">
+  <div class="menu__bar grid-editorial">
+    <div class="menu__bar-inner">
+      <span class="menu__name">{site.name}</span>
+      <button type="button" class="menu__close" data-menu-close>
+        Close
+      </button>
+    </div>
+  </div>
+
+  <nav class="menu__body grid-editorial" aria-label="Sections">
+    <ul role="list" class="menu__list">
+      {nav.map((item, i) => (
+        <li style={`--i: ${i}`}>
+          <a href={item.href} class="menu__link swap-trigger" data-menu-link>
+            <span class="font-display">{item.label}</span>
+            <ArrowSwap direction="right" class="menu__arrow" />
+          </a>
+        </li>
+      ))}
+    </ul>
+    <a href={contactHref} class="menu__contact swap-trigger" style={`--i: ${nav.length}`}>
+      Let’s Talk
+      <ArrowSwap direction="up-right" />
+    </a>
+  </nav>
+</dialog>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>("#site-menu");
+  const opener = document.querySelector<HTMLButtonElement>("[data-menu-open]");
+
+  if (dialog && opener) {
+    opener.addEventListener("click", () => dialog.showModal());
+    dialog.querySelector("[data-menu-close]")?.addEventListener("click", () => dialog.close());
+
+    // Close first, then move to the section (and focus it) so the browser's
+    // focus return to the Menu button doesn't fight the jump.
+    dialog.querySelectorAll<HTMLAnchorElement>("[data-menu-link]").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        const id = link.hash.slice(1);
+        const target = document.getElementById(id);
+        if (!target) return;
+        event.preventDefault();
+        dialog.close();
+        target.setAttribute("tabindex", "-1");
+        target.focus({ preventScroll: true });
+        const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+        target.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
+        history.replaceState(null, "", `#${id}`);
+      });
+    });
+  }
+</script>
 
 <style>
   .site-header__inner {
@@ -51,5 +123,128 @@ import { contactHref, nav, site } from "@/data/site";
     display: flex;
     align-items: center;
     gap: clamp(1.25rem, 0.8rem + 1.6vw, 2.5rem);
+  }
+
+  /* Phones: sections live in the menu. */
+  .site-header__section {
+    display: none;
+  }
+
+  .site-header__menu,
+  .menu__close {
+    position: relative;
+    min-height: 2.75rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-fg);
+    font: inherit;
+    font-size: var(--text-small);
+    font-weight: 500;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (min-width: 48rem) {
+    .site-header__section {
+      display: list-item;
+    }
+
+    .site-header__menu-item {
+      display: none;
+    }
+  }
+
+  /* Menu -------------------------------------------------------------- */
+  .menu {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overscroll-behavior: contain;
+  }
+
+  .menu::backdrop {
+    background-color: var(--color-ink);
+  }
+
+  :global(html:has(dialog[open])) {
+    overflow: hidden;
+  }
+
+  .menu__bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-h);
+    border-bottom: 1px solid var(--color-rule);
+  }
+
+  .menu__name {
+    font-family: var(--font-serif);
+    font-size: 1.3125rem;
+    font-weight: 450;
+    letter-spacing: -0.012em;
+  }
+
+  .menu__body {
+    padding-block: 2.5rem 3rem;
+  }
+
+  .menu__list,
+  .menu__contact {
+    grid-column: content;
+  }
+
+  .menu__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 1rem;
+    border-bottom: 1px solid var(--color-rule);
+    font-size: clamp(2.25rem, 1.5rem + 4vw, 3rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+  }
+
+  .menu__link :global(.menu__arrow) {
+    font-size: 1.25rem;
+    color: var(--color-fg-muted);
+  }
+
+  .menu__contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    justify-self: start;
+    min-height: 2.75rem;
+    margin-top: 2.5rem;
+    font-weight: 500;
+    text-decoration: none;
+    color: var(--color-accent);
+  }
+
+  /* Opening: the sheet fades in and the links rise one after another. */
+  @media (prefers-reduced-motion: no-preference) {
+    .menu[open] {
+      animation: menu-in var(--dur-base) var(--ease-out-expo);
+    }
+
+    .menu[open] .menu__list li,
+    .menu[open] .menu__contact {
+      animation: enter-rise var(--dur-slow) var(--ease-out-expo) both;
+      animation-delay: calc(80ms + var(--i) * 60ms);
+    }
+  }
+
+  @keyframes menu-in {
+    from {
+      opacity: 0;
+    }
   }
 </style>

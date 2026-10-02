@@ -30,8 +30,10 @@ src/
 ├─ components/
 │  ├─ ui/                    # primitives: Button, Arrow, ArrowSwap
 │  ├─ layout/                # SiteHeader, SkipLink, Section, SectionHeader
-│  └─ sections/              # one folder per page section (hero/, about/, …)
+│  └─ sections/              # one folder per page section (hero/, about/, experience/, skills/)
+├─ content/experience.yaml   # roles (content collection, schema in content.config.ts)
 ├─ data/site.ts              # site-wide facts: name, role, availability, contact, nav
+├─ data/skills.ts            # skill groups (no levels or percentages)
 ├─ layouts/BaseLayout.astro  # <head>, meta, fonts, structured data
 ├─ pages/index.astro         # composes the sections in order
 ├─ scripts/reveal.ts         # scroll reveal (progressive enhancement)
@@ -41,20 +43,21 @@ src/
 ```
 
 **Content rule:** site-wide facts live in `src/data/site.ts`; bespoke editorial
-copy lives with its section; repeatable records (experience, projects, …) will
-live in content collections.
+copy lives with its section; repeatable records live in content collections
+(`experience` so far). The Skills section derives its "used in my current
+role" marks from the current role's tools, so the two sections can't disagree.
 
 ## Design system — "Ink & Paper"
 
 **Palette.** A two-tone foundation with three small accents, each with one job:
 
-| Colour | Values                                     | Job                                                                                                           |
-| ------ | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| Paper  | Ivory `#F5F2EB`, Stone `#ECE8DF`           | Reading sections; the hero. The portrait only ever sits on paper.                                             |
-| Ink    | `#16212B`, raised `#1F2B37`                | Text on paper; masthead and statement sections in reverse.                                                    |
-| Cobalt | `#315F98`, light `#8FB0DD`, deep `#26497A` | Action only: buttons, links, focus.                                                                           |
-| Copper | `#B77A4B`, light `#C48A5A`                 | Signature — three marks on the page: the headline's full stop, the availability marker, the active principle. |
-| Sage   | deep `#4E6249`, light `#A7B99D`            | Quiet: small labels and indices. (A `sage` field tone exists but is unused.)                                  |
+| Colour | Values                                     | Job                                                                                                                                                      |
+| ------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Paper  | Ivory `#F5F2EB`, Stone `#ECE8DF`           | Reading sections; the hero. The portrait only ever sits on paper.                                                                                        |
+| Ink    | `#16212B`, raised `#1F2B37`                | Text on paper; masthead and statement sections in reverse.                                                                                               |
+| Cobalt | `#315F98`, light `#8FB0DD`, deep `#26497A` | Action only: buttons, links, focus.                                                                                                                      |
+| Copper | `#B77A4B`, light `#C48A5A`                 | Signature. The headline's full stop, the active principle, and a small square that always means "now": availability, the current role, tools used in it. |
+| Sage   | deep `#4E6249`, light `#A7B99D`            | Quiet: small labels and indices. (A `sage` field tone exists but is unused.)                                                                             |
 
 **Tones.** Components use semantic tokens only (`bg`, `fg`, `fg-muted`, `mark`,
 `signature`, `accent`, `action`, `rule`, …). A section's `tone` — `paper`
@@ -63,9 +66,9 @@ its own.
 
 **Section rhythm.** Neighbouring sections never share a tone (the hero's ink
 band deliberately runs into About). Planned order: Hero (paper) → About (ink) →
-Experience (paper) → Skills & Learning (stone, or a restrained sage field —
-decided in Phase 2) → Projects (paper) → AI & Engineering (ink) → Research &
-Certifications (stone) → Contact & Footer (ink).
+Experience (paper) → Skills & Learning (ink) → Projects (paper) → AI &
+Engineering (ink) → Research & Certifications (paper/stone) → Contact & Footer
+(ink).
 
 **Motion.** One vocabulary: type rises from its baseline, rules draw from the
 left, the portrait emerges from the band it stands on.
@@ -78,6 +81,8 @@ left, the portrait emerges from the band it stands on.
   triggered by hover or keyboard focus on a `.swap-trigger` ancestor.
 - The About principles have one active row: the hovered row with a mouse,
   otherwise the row crossing the middle of the screen.
+- Skills has a switch (`role="switch"`) that highlights current-role tools.
+- On phones the sections move into a full-screen `<dialog>` menu.
 - Without JS everything is static and visible; with `prefers-reduced-motion`
   everything appears in its final state.
 
@@ -96,7 +101,7 @@ outer tracks. Place items with named lines, e.g.
 ## Roadmap
 
 1. ✅ Hero + About
-2. Experience + Skills
+2. ✅ Experience + Skills
 3. Projects + AI / Engineering
 4. Research / Publications + Certifications + Contact
 5. Footer, responsive polish, accessibility, performance, final refinement

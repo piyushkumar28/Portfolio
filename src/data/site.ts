@@ -29,4 +29,8 @@ export const contactHref = `mailto:${site.contact.email}`;
  * Primary navigation. Add an item only when its section ships, so the nav never links
  * to a section that doesn't exist yet.
  */
-export const nav: NavItem[] = [{ label: "About", href: "#about" }];
+export const nav: NavItem[] = [
+  { label: "About", href: "#about" },
+  { label: "Experience", href: "#experience" },
+  { label: "Skills", href: "#skills" },
+];
