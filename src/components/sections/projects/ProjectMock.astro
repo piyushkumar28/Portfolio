@@ -1,0 +1,970 @@
+---
+/**
+ * Illustrative product mockups for project previews, drawn in HTML/CSS (no
+ * images): skeleton UI that shows what kind of product it is without
+ * inventing data — no real names, numbers or features. They carry the
+ * project's tint through --h (an "r g b" triple) and come alive on hover
+ * (.pj:hover / :focus-within) with small loops that stop for reduced motion.
+ *
+ * Swap a mockup for real screenshots later by replacing it in ProjectCard.
+ */
+import type { Project } from "@/data/projects";
+
+interface Props {
+  mock: Project["mock"];
+  label: string;
+}
+
+const { mock, label } = Astro.props;
+const bars = Array.from(
+  { length: 28 },
+  (_, i) => 18 + Math.round(Math.abs(Math.sin(i * 1.7)) * 70),
+);
+---
+
+<div class:list={["mk", `mk--${mock}`]} aria-hidden="true">
+  <div class="mk__bar">
+    <span class="mk__dots">
+      <span></span>
+      <span></span>
+      <span></span>
+    </span>
+    <span class="mk__url mono">{label}</span>
+  </div>
+
+  {mock === "board" && (
+    <div class="mk__body mk-board">
+      <div class="mk-side">
+        <span class="mk-logo" />
+        <span class="sk w70" />
+        <span class="sk w55 on" />
+        <span class="sk w60" />
+        <span class="sk w45" />
+      </div>
+      <div class="mk-main">
+        <div class="mk-toolbar">
+          <span class="sk w30 tall" />
+          <span class="mk-avatars">
+            <span />
+            <span />
+            <span />
+          </span>
+          <span class="mk-pill" />
+        </div>
+        <div class="mk-cols">
+          {[3, 2, 2].map((n, c) => (
+            <div class="mk-col">
+              <div class="mk-col-head">
+                <span class={`mk-dot c${c}`} />
+                <span class="sk w40" />
+              </div>
+              {Array.from({ length: n }, (_, i) => (
+                <div class:list={["mk-card", { "mk-card--moving": c === 0 && i === 1 }]}>
+                  <span class="sk w80" />
+                  <span class="sk w55" />
+                  <span class="mk-card-foot">
+                    <span class={`mk-tag c${(c + i) % 3}`} />
+                    <span class="mk-face" />
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
+
+  {mock === "voice" && (
+    <div class="mk__body mk-voice">
+      <div class="mk-bubble mk-bubble--me">
+        <span class="sk w70" />
+        <span class="sk w40" />
+      </div>
+      <div class="mk-bubble mk-bubble--ai">
+        <span class="sk w85" />
+        <span class="sk w65" />
+        <span class="sk w45" />
+      </div>
+      <div class="mk-mic">
+        <span class="mk-ring" />
+        <span class="mk-ring mk-ring--2" />
+        <span class="mk-mic-core">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          >
+            <rect x="9" y="3.5" width="6" height="11" rx="3" />
+            <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5" />
+          </svg>
+        </span>
+      </div>
+      <div class="mk-wave">
+        {bars.map((h, i) => (
+          <span style={`--h0: ${h}%; --d: ${(i % 7) * 90}ms`} />
+        ))}
+      </div>
+    </div>
+  )}
+
+  {mock === "document" && (
+    <div class="mk__body mk-doc">
+      <div class="mk-page">
+        <span class="sk dark w60 tall" />
+        <span class="sk dark w90" />
+        <span class="sk dark w85" />
+        <span class="sk dark w75" />
+        <span class="mk-table">
+          {Array.from({ length: 6 }, () => (
+            <span />
+          ))}
+        </span>
+        <span class="sk dark w80" />
+        <span class="sk dark w50" />
+        <span class="mk-scan">
+          <span class="mk-scan-line" />
+        </span>
+      </div>
+      <div class="mk-fields">
+        <span class="mk-fields-head mono">extracted</span>
+        {["page", "block", "line", "text"].map((k) => (
+          <span class="mk-field">
+            <span class="mono">{k}</span>
+            <span class="sk w60" />
+          </span>
+        ))}
+        <span class="mk-chip mono">Azure AI · OCR</span>
+      </div>
+    </div>
+  )}
+
+  {mock === "dashboard" && (
+    <div class="mk__body mk-dash">
+      <div class="mk-side">
+        <span class="mk-logo mk-logo--cross" />
+        <span class="sk w70 on" />
+        <span class="sk w55" />
+        <span class="sk w60" />
+        <span class="sk w45" />
+        <span class="sk w50" />
+      </div>
+      <div class="mk-main">
+        <div class="mk-toolbar">
+          <span class="sk w35 tall" />
+          <span class="mk-search" />
+        </div>
+        <div class="mk-tiles">
+          {[0, 1, 2].map((c) => (
+            <div class="mk-tile">
+              <span class={`mk-tile-icon c${c}`} />
+              <span class="sk w60" />
+              <span class="sk w35 tall" />
+            </div>
+          ))}
+        </div>
+        <div class="mk-rows">
+          {[0, 1, 2, 3].map((i) => (
+            <div class="mk-row">
+              <span class="mk-face" />
+              <span class="sk w40" />
+              <span class="sk w25" />
+              <span class={`mk-status c${i % 3}`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
+
+  {mock === "resume" && (
+    <div class="mk__body mk-resume">
+      <div class="mk-editor">
+        <div class="mk-tabs">
+          <span class="on" />
+          <span />
+          <span />
+        </div>
+        {[0, 1, 2].map((i) => (
+          <div class="mk-input">
+            <span class="sk w30" />
+            <span class:list={["mk-field-box", { "is-typing": i === 1 }]}>
+              <span class="sk w55" />
+              {i === 1 && <span class="mk-caret" />}
+            </span>
+          </div>
+        ))}
+        <span class="mk-add" />
+      </div>
+      <div class="mk-paper">
+        <span class="sk dark w55 tall" />
+        <span class="sk dark w35" />
+        {[0, 1, 2].map(() => (
+          <span class="mk-paper-section">
+            <span class="mk-paper-head" />
+            <span class="sk dark w90" />
+            <span class="sk dark w75" />
+          </span>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {mock === "cache" && (
+    <div class="mk__body mk-cache">
+      <div class="mk-cores">
+        {[0, 1, 2, 3].map((i) => (
+          <span class="mk-core">
+            <span class="mono">CPU{i}</span>
+            <span class="mk-l1 mono">L1</span>
+          </span>
+        ))}
+      </div>
+      <div class="mk-links">
+        {[0, 1, 2, 3].map(() => (
+          <span />
+        ))}
+      </div>
+      <div class="mk-l2s">
+        <span class="mono">L2</span>
+        <span class="mono">L2</span>
+      </div>
+      <div class="mk-llc">
+        <span class="mk-llc-label mono">LLC</span>
+        <span class="mk-sets">
+          {Array.from({ length: 32 }, (_, i) => (
+            <span style={`--d: ${(i * 37) % 900}ms`} />
+          ))}
+        </span>
+      </div>
+      <div class="mk-dram mono">DRAM</div>
+      <span class="mk-chip mono">gem5</span>
+    </div>
+  )}
+</div>
+
+<style>
+  .mk {
+    --tint: rgb(var(--h));
+    --sk: rgb(243 239 231 / 0.1);
+    --sk-on: rgb(243 239 231 / 0.2);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid rgb(243 239 231 / 0.14);
+    border-radius: var(--radius-md);
+    background-color: #111820;
+    box-shadow:
+      0 30px 60px -30px rgb(0 0 0 / 0.9),
+      0 0 0 1px rgb(0 0 0 / 0.3);
+  }
+
+  .mk__bar {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgb(243 239 231 / 0.08);
+    background-color: #151d26;
+  }
+
+  .mk__dots {
+    display: flex;
+    gap: 0.3125rem;
+  }
+
+  .mk__dots span {
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background-color: rgb(243 239 231 / 0.18);
+  }
+
+  .mk__url {
+    flex: 1;
+    max-width: 16rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: var(--radius-full);
+    background-color: rgb(243 239 231 / 0.05);
+    color: var(--color-fg-subtle);
+    font-size: 0.625rem;
+  }
+
+  .mk__body {
+    flex: 1;
+    min-height: 0;
+    padding: 0.875rem;
+  }
+
+  /* Skeleton text */
+  .sk {
+    display: block;
+    height: 0.375rem;
+    border-radius: var(--radius-full);
+    background-color: var(--sk);
+  }
+
+  .sk.tall {
+    height: 0.625rem;
+  }
+  .sk.on {
+    background-color: var(--tint);
+    opacity: 0.8;
+  }
+  .sk.dark {
+    background-color: rgb(22 33 43 / 0.16);
+  }
+  .w25 {
+    width: 25%;
+  }
+  .w30 {
+    width: 30%;
+  }
+  .w35 {
+    width: 35%;
+  }
+  .w40 {
+    width: 40%;
+  }
+  .w45 {
+    width: 45%;
+  }
+  .w50 {
+    width: 50%;
+  }
+  .w55 {
+    width: 55%;
+  }
+  .w60 {
+    width: 60%;
+  }
+  .w65 {
+    width: 65%;
+  }
+  .w70 {
+    width: 70%;
+  }
+  .w75 {
+    width: 75%;
+  }
+  .w80 {
+    width: 80%;
+  }
+  .w85 {
+    width: 85%;
+  }
+  .w90 {
+    width: 90%;
+  }
+
+  .c0 {
+    --c: var(--tint);
+  }
+  .c1 {
+    --c: rgb(143 176 221);
+  }
+  .c2 {
+    --c: rgb(167 185 157);
+  }
+
+  .mk-chip {
+    position: absolute;
+    right: 0.875rem;
+    bottom: 0.875rem;
+    padding: 0.25rem 0.625rem;
+    border: 1px solid rgb(var(--h) / 0.5);
+    border-radius: var(--radius-full);
+    background-color: rgb(var(--h) / 0.12);
+    color: var(--tint);
+    font-size: 0.625rem;
+  }
+
+  /* App shell (board, dashboard) */
+  .mk-board,
+  .mk-dash {
+    display: grid;
+    grid-template-columns: 22% 1fr;
+    gap: 0.875rem;
+  }
+
+  .mk-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding-right: 0.75rem;
+    border-right: 1px solid rgb(243 239 231 / 0.06);
+  }
+
+  .mk-logo {
+    width: 1.375rem;
+    height: 1.375rem;
+    margin-bottom: 0.375rem;
+    border-radius: 0.375rem;
+    background-color: var(--tint);
+  }
+
+  .mk-logo--cross {
+    background:
+      linear-gradient(var(--tint), var(--tint)) center / 30% 70% no-repeat,
+      linear-gradient(var(--tint), var(--tint)) center / 70% 30% no-repeat;
+  }
+
+  .mk-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .mk-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .mk-avatars {
+    display: flex;
+    margin-left: auto;
+  }
+
+  .mk-avatars span,
+  .mk-face {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid #111820;
+    border-radius: 50%;
+    background-color: rgb(243 239 231 / 0.25);
+  }
+
+  .mk-avatars span + span {
+    margin-left: -0.375rem;
+  }
+
+  .mk-pill {
+    width: 3.5rem;
+    height: 1.125rem;
+    border-radius: var(--radius-full);
+    background-color: var(--tint);
+  }
+
+  .mk-cols {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.625rem;
+  }
+
+  .mk-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    background-color: rgb(243 239 231 / 0.03);
+  }
+
+  .mk-col-head {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .mk-dot {
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background-color: var(--c);
+  }
+
+  .mk-card {
+    display: grid;
+    gap: 0.375rem;
+    padding: 0.5rem;
+    border: 1px solid rgb(243 239 231 / 0.08);
+    border-radius: 0.375rem;
+    background-color: #18212b;
+  }
+
+  .mk-card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.125rem;
+  }
+
+  .mk-tag {
+    width: 2rem;
+    height: 0.5rem;
+    border-radius: var(--radius-full);
+    background-color: var(--c);
+    opacity: 0.55;
+  }
+
+  .mk-card--moving {
+    border-color: rgb(var(--h) / 0.7);
+    box-shadow: 0 10px 24px -10px rgb(0 0 0 / 0.8);
+  }
+
+  /* Voice */
+  .mk-voice {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 1.125rem;
+  }
+
+  .mk-bubble {
+    display: grid;
+    gap: 0.375rem;
+    width: 52%;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.75rem;
+  }
+
+  .mk-bubble--me {
+    align-self: flex-end;
+    border-bottom-right-radius: 0.25rem;
+    background-color: rgb(var(--h) / 0.22);
+  }
+
+  .mk-bubble--ai {
+    border-bottom-left-radius: 0.25rem;
+    background-color: rgb(243 239 231 / 0.06);
+  }
+
+  .mk-mic {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 3.75rem;
+    height: 3.75rem;
+    margin: 0.75rem auto 0;
+  }
+
+  .mk-mic-core {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background-color: var(--tint);
+    color: #0d1218;
+  }
+
+  .mk-mic-core svg {
+    width: 45%;
+  }
+
+  .mk-ring {
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgb(var(--h) / 0.6);
+    border-radius: 50%;
+  }
+
+  .mk-wave {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 2.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .mk-wave span {
+    width: 3px;
+    height: var(--h0);
+    border-radius: 3px;
+    background-color: var(--tint);
+    opacity: 0.75;
+  }
+
+  /* Document */
+  .mk-doc {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 0.875rem;
+  }
+
+  .mk-page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.875rem;
+    border-radius: 0.375rem;
+    background-color: #ece6da;
+  }
+
+  .mk-table {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+    margin: 0.25rem 0;
+  }
+
+  .mk-table span {
+    height: 0.75rem;
+    border-radius: 2px;
+    background-color: rgb(22 33 43 / 0.1);
+  }
+
+  .mk-scan {
+    position: absolute;
+    top: 18%;
+    left: 6%;
+    right: 6%;
+    height: 34%;
+    overflow: hidden;
+    border: 1.5px solid rgb(var(--h));
+    border-radius: 0.25rem;
+    background-color: rgb(var(--h) / 0.12);
+  }
+
+  .mk-scan-line {
+    position: absolute;
+    inset: 0 0 auto;
+    height: 2px;
+    background-color: rgb(var(--h));
+    box-shadow: 0 0 10px rgb(var(--h));
+  }
+
+  .mk-fields {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid rgb(243 239 231 / 0.08);
+    border-radius: 0.375rem;
+  }
+
+  .mk-fields-head {
+    color: var(--tint);
+    font-size: 0.625rem;
+  }
+
+  .mk-field {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: rgb(243 239 231 / 0.04);
+    color: var(--color-fg-subtle);
+    font-size: 0.5625rem;
+  }
+
+  /* Dashboard */
+  .mk-search {
+    width: 30%;
+    height: 1.125rem;
+    margin-left: auto;
+    border: 1px solid rgb(243 239 231 / 0.12);
+    border-radius: var(--radius-full);
+  }
+
+  .mk-tiles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  .mk-tile {
+    display: grid;
+    gap: 0.4375rem;
+    padding: 0.625rem;
+    border: 1px solid rgb(243 239 231 / 0.08);
+    border-radius: 0.375rem;
+  }
+
+  .mk-tile-icon {
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 0.3125rem;
+    background-color: var(--c);
+    opacity: 0.8;
+  }
+
+  .mk-rows {
+    display: grid;
+    gap: 0.375rem;
+  }
+
+  .mk-row {
+    display: grid;
+    grid-template-columns: auto 1fr 0.7fr auto;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.4375rem 0.5rem;
+    border-radius: 0.375rem;
+    background-color: rgb(243 239 231 / 0.03);
+  }
+
+  .mk-status {
+    width: 2.25rem;
+    height: 0.625rem;
+    border-radius: var(--radius-full);
+    background-color: var(--c);
+    opacity: 0.5;
+  }
+
+  /* Resume */
+  .mk-resume {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.875rem;
+  }
+
+  .mk-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .mk-tabs {
+    display: flex;
+    gap: 0.375rem;
+  }
+
+  .mk-tabs span {
+    width: 2.75rem;
+    height: 1rem;
+    border-radius: var(--radius-full);
+    background-color: rgb(243 239 231 / 0.07);
+  }
+
+  .mk-tabs .on {
+    background-color: rgb(var(--h) / 0.5);
+  }
+
+  .mk-input {
+    display: grid;
+    gap: 0.375rem;
+  }
+
+  .mk-field-box {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 1.625rem;
+    padding: 0 0.5rem;
+    border: 1px solid rgb(243 239 231 / 0.12);
+    border-radius: 0.3125rem;
+  }
+
+  .mk-field-box.is-typing {
+    border-color: rgb(var(--h) / 0.8);
+  }
+
+  .mk-caret {
+    width: 1.5px;
+    height: 0.75rem;
+    background-color: var(--tint);
+    animation: mk-blink 1s steps(1) infinite;
+  }
+
+  .mk-add {
+    width: 40%;
+    height: 1.25rem;
+    border: 1px dashed rgb(243 239 231 / 0.2);
+    border-radius: 0.3125rem;
+  }
+
+  .mk-paper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4375rem;
+    padding: 0.875rem;
+    border-radius: 0.25rem;
+    background-color: #f1ece2;
+    box-shadow: 0 12px 30px -16px rgb(0 0 0 / 0.8);
+    transform: rotate(1.5deg);
+  }
+
+  .mk-paper-section {
+    display: grid;
+    gap: 0.3125rem;
+    margin-top: 0.375rem;
+  }
+
+  .mk-paper-head {
+    width: 30%;
+    height: 0.3125rem;
+    border-radius: var(--radius-full);
+    background-color: var(--tint);
+  }
+
+  /* Cache hierarchy */
+  .mk-cache {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem 1.125rem;
+    color: var(--color-fg-subtle);
+    font-size: 0.5625rem;
+  }
+
+  .mk-cores,
+  .mk-l2s,
+  .mk-links {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+
+  .mk-l2s {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mk-core {
+    display: grid;
+    gap: 0.3125rem;
+    padding: 0.4375rem;
+    border: 1px solid rgb(243 239 231 / 0.12);
+    border-radius: 0.3125rem;
+    text-align: center;
+  }
+
+  .mk-l1 {
+    padding: 0.1875rem;
+    border-radius: 0.1875rem;
+    background-color: rgb(243 239 231 / 0.06);
+  }
+
+  .mk-links span {
+    justify-self: center;
+    width: 1px;
+    height: 0.625rem;
+    background-color: rgb(243 239 231 / 0.2);
+  }
+
+  .mk-l2s span {
+    padding: 0.375rem;
+    border: 1px solid rgb(243 239 231 / 0.12);
+    border-radius: 0.3125rem;
+    text-align: center;
+  }
+
+  .mk-llc {
+    display: grid;
+    gap: 0.375rem;
+    padding: 0.5rem;
+    border: 1px solid rgb(var(--h) / 0.7);
+    border-radius: 0.375rem;
+    background-color: rgb(var(--h) / 0.08);
+  }
+
+  .mk-llc-label {
+    color: var(--tint);
+  }
+
+  .mk-sets {
+    display: grid;
+    grid-template-columns: repeat(16, 1fr);
+    gap: 2px;
+  }
+
+  .mk-sets span {
+    height: 0.5rem;
+    border-radius: 1px;
+    background-color: rgb(var(--h) / 0.25);
+  }
+
+  .mk-dram {
+    padding: 0.375rem;
+    border: 1px dashed rgb(243 239 231 / 0.18);
+    border-radius: 0.3125rem;
+    text-align: center;
+  }
+
+  /* Life on hover / focus ------------------------------------------------- */
+  @media (prefers-reduced-motion: no-preference) {
+    :global(.pj:is(:hover, :focus-within)) .mk-card--moving {
+      animation: mk-drag 3.2s var(--ease-out-expo) infinite;
+    }
+
+    :global(.pj:is(:hover, :focus-within)) .mk-wave span {
+      animation: mk-wave 900ms ease-in-out infinite alternate;
+      animation-delay: var(--d);
+    }
+
+    :global(.pj:is(:hover, :focus-within)) .mk-ring {
+      animation: mk-ring 2s var(--ease-out-expo) infinite;
+    }
+
+    :global(.pj:is(:hover, :focus-within)) .mk-ring--2 {
+      animation-delay: 1s;
+    }
+
+    :global(.pj:is(:hover, :focus-within)) .mk-scan-line {
+      animation: mk-scan 2.2s ease-in-out infinite alternate;
+    }
+
+    :global(.pj:is(:hover, :focus-within)) .mk-sets span {
+      animation: mk-hit 1.8s ease-in-out infinite;
+      animation-delay: var(--d);
+    }
+
+    :global(.pj:is(:hover, :focus-within)) .mk-status {
+      animation: mk-hit 2.4s ease-in-out infinite;
+    }
+  }
+
+  @keyframes mk-drag {
+    0%,
+    15% {
+      transform: none;
+    }
+    45%,
+    70% {
+      transform: translate(calc(100% + 1.1rem), -0.25rem) rotate(3deg);
+    }
+    100% {
+      transform: none;
+    }
+  }
+
+  @keyframes mk-wave {
+    to {
+      height: calc(var(--h0) * 0.35);
+    }
+  }
+
+  @keyframes mk-ring {
+    from {
+      transform: scale(1);
+      opacity: 0.9;
+    }
+    to {
+      transform: scale(1.9);
+      opacity: 0;
+    }
+  }
+
+  @keyframes mk-scan {
+    to {
+      top: calc(100% - 2px);
+    }
+  }
+
+  @keyframes mk-hit {
+    50% {
+      background-color: rgb(var(--h) / 0.85);
+    }
+  }
+
+  @keyframes mk-blink {
+    50% {
+      opacity: 0;
+    }
+  }
+</style>

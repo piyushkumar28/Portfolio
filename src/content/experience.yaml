@@ -5,42 +5,63 @@
   start: 2025
   end: null
   summary: >-
-    I build backend features in Python and Django: REST APIs, the PostgreSQL
-    data behind them, and integrations with other systems. Where a feature
-    needs an interface, I work in React too.
+    I build backend features in Python and Django: REST APIs, the data behind
+    them and integrations with other systems.
   tools: [Python, Django, REST APIs, SQL, PostgreSQL, Docker, React]
-  stack:
-    intro: >-
-      One request, from the interface to the database, with the backend
-      running in Docker.
-    layers:
+  system:
+    nodes:
       - id: react
-        tier: Interface
         name: React
-        detail: Frontend
-        handoff: HTTP · JSON
-        text: Where a feature needs an interface, I build it in React on top of the same APIs.
+        kind: Client
+        text: Interfaces on top of the same APIs, where a feature needs one.
+      - id: systems
+        name: Other systems
+        kind: External
+        external: true
+        text: Services the backend exchanges data with through its APIs.
       - id: rest
-        tier: API
         name: REST APIs
-        detail: Integrations
-        handoff: In process
-        text: Endpoints for the frontend, and integrations that connect the backend to other systems.
+        kind: Interface
+        text: Endpoints for the frontend and integrations with other systems.
       - id: django
-        tier: Application
         name: Django
-        detail: Python
-        handoff: ORM · SQL
-        text: The core of the work. Models, business logic and the views behind each endpoint, in Python.
+        kind: Framework
+        text: "The core of the work: models, business logic and the views behind each endpoint."
+      - id: python
+        name: Python
+        kind: Language
+        text: What the whole backend is written in.
       - id: postgres
-        tier: Data
         name: PostgreSQL
-        detail: SQL
-        text: Relational data, reached through Django’s ORM and plain SQL.
-    runtime:
+        kind: Database
+        text: Relational data, through Django’s ORM and plain SQL.
+    container:
       id: docker
-      tier: Runtime
       name: Docker
-      detail: Containers
+      kind: Container
       text: Packages the backend so it runs the same on every machine.
-    runtimeWraps: [rest, django, postgres]
+      wraps: [rest, django, python]
+    wires:
+      - { from: react, to: rest, label: HTTP · JSON }
+      - { from: systems, to: rest, label: integrations }
+      - { from: rest, to: django, label: routing }
+      - { from: django, to: postgres, label: ORM · SQL }
+      - { from: python, to: django, label: runtime, flow: false }
+    trace:
+      - { path: [react, rest], step: Request, text: React calls an endpoint over HTTP. }
+      - { path: [rest, django], step: Route, text: Django routes the request to a view. }
+      - {
+          path: [django, postgres],
+          step: Query,
+          text: The view reads and writes data through the ORM.,
+        }
+      - {
+          path: [postgres, django],
+          step: Result,
+          text: Rows come back to the view as model objects.,
+        }
+      - {
+          path: [django, rest, react],
+          step: Response,
+          text: The response goes back to the interface as JSON.,
+        }

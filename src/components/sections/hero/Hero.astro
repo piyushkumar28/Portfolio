@@ -1,256 +1,631 @@
 ---
+/**
+ * Hero: who, what, and proof of building — in one screen.
+ *
+ * Left: availability, role, the headline (one serif accent), the intro, a
+ * live "building with …" line that types through the current stack, and the
+ * two actions.
+ *
+ * Right: the portrait in an ivory card (its studio-white background is
+ * multiplied into the card, never onto the dark page). The card tilts toward
+ * the pointer; two small cards — the current role and a code snippet made of
+ * facts only — drift at different depths around it.
+ *
+ * Behind it all: a dot grid lit around the pointer (data-spotlight).
+ */
+import { Picture } from "astro:assets";
+import portrait from "@/assets/images/portrait/portrait.jpg";
 import Button from "@/components/ui/Button.astro";
-import HeroFolio from "./HeroFolio.astro";
-import HeroPortrait from "./HeroPortrait.astro";
-import { contactHref, site } from "@/data/site";
+import Icon from "@/components/ui/Icon.astro";
+import { site } from "@/data/site";
+
+const stack = ["Python", "Django", "REST APIs", "PostgreSQL", "Docker", "React"];
 ---
 
-<section class="hero grid-editorial" data-tone="paper" aria-labelledby="hero-title">
-  {/* Load choreography (ms after fonts are ready):
-       0 eyebrow · 80 line 1 · 200 line 2 · 300 portrait emerges · 520 intro
-       640 actions · 760 band · 950 the copper full stop lands */}
-  <p class="hero__eyebrow label">
-    <span data-enter="rise">{site.role}</span>
-    <span
-      class="hero__eyebrow-rule"
-      data-enter="draw"
-      style="--delay: 180ms"
-      aria-hidden="true"
-    ></span>
-  </p>
+<section id="top" class="hero" aria-labelledby="hero-title" data-spotlight>
+  <div class="hero__bg" aria-hidden="true"></div>
 
-  <h1 id="hero-title" class="hero__title font-display text-display">
-    <span class="hero__line">
-      <span class="hero__line-inner" data-enter="mask" style="--delay: 80ms">
-        Curious by nature.
-      </span>
-    </span>{" "}
-    <span class="hero__line hero__line--indent">
-      <span class="hero__line-inner" data-enter="mask" style="--delay: 200ms">
-        Driven by{" "}
-        <em>
-          problems
-          <span class="hero__stop" data-enter="stamp" style="--delay: 950ms">
-            .
+  <div class="container hero__grid">
+    <div class="hero__copy">
+      <p class="hero__status" data-enter="rise" style="--delay: 80ms">
+        <span class="hero__dot" aria-hidden="true"></span>
+        {site.availability.join(" · ")}
+      </p>
+
+      <p class="hero__role mono" data-enter="rise" style="--delay: 160ms">
+        {site.role}
+        <span aria-hidden="true">/</span>
+        {site.focus}
+      </p>
+
+      <h1 id="hero-title" class="hero__title">
+        <span class="hero__line">
+          <span data-enter="mask" style="--delay: 220ms">
+            Curious by nature.
           </span>
-        </em>
-      </span>
-    </span>
-  </h1>
+        </span>
+        <span class="hero__line">
+          <span data-enter="mask" style="--delay: 320ms">
+            Driven by <em class="accent-word">problems.</em>
+          </span>
+        </span>
+      </h1>
 
-  <div class="hero__body">
-    <p class="hero__intro text-lead" data-enter="rise" style="--delay: 520ms">
-      I’m {site.name}, a Software Engineer who enjoys solving problems, exploring new technologies,
-      and finding better ways to turn ideas into something useful.
-    </p>
+      <p class="hero__intro" data-enter="rise" style="--delay: 520ms">
+        I’m {site.name}, a {site.role} who enjoys solving problems, exploring new technologies, and
+        finding better ways to turn ideas into something useful.
+      </p>
 
-    <div class="hero__actions" data-enter="rise" style="--delay: 640ms">
-      <Button href="#work" arrow="right">
-        View My Work
-      </Button>
-      <Button href={contactHref} variant="text" arrow="up-right">
-        Let’s Talk
-      </Button>
+      <p
+        class="hero__typer mono"
+        data-typer
+        data-words={JSON.stringify(stack)}
+        data-enter="rise"
+        style="--delay: 620ms"
+      >
+        <span class="hero__prompt" aria-hidden="true">
+          $
+        </span>
+        <span>currently building with</span>
+        <span class="hero__typed" aria-hidden="true">
+          <span data-typer-text>{stack[0]}</span>
+          <span class="hero__caret"></span>
+        </span>
+        <span class="sr-only">{stack.join(", ")}</span>
+      </p>
+
+      <div class="hero__actions" data-enter="rise" style="--delay: 720ms">
+        <Button href="#projects" magnetic>
+          View my work
+        </Button>
+        <Button href="#contact" variant="secondary" arrow="up-right">
+          Let’s talk
+        </Button>
+      </div>
+    </div>
+
+    <div class="hero__visual" data-tilt-area data-enter="scale" style="--delay: 260ms">
+      <figure class="hero__card" data-tilt="7">
+        <div class="hero__photo">
+          <Picture
+            src={portrait}
+            formats={["avif", "webp"]}
+            widths={[360, 540, 720, 960]}
+            sizes="(min-width: 64rem) 400px, min(78vw, 400px)"
+            alt="Portrait of Piyush Kumar"
+            priority
+            class="hero__img"
+          />
+        </div>
+        <figcaption class="hero__caption">
+          <span>
+            <span class="hero__caption-name">{site.name}</span>
+            <span class="hero__caption-role">{site.role}</span>
+          </span>
+          <span class="hero__caption-tag mono">{site.focus}</span>
+        </figcaption>
+        <span class="hero__glare" aria-hidden="true"></span>
+      </figure>
+
+      <div class="hero__float hero__float--role" aria-hidden="true">
+        <span class="hero__float-mark">IC</span>
+        <span>
+          <span class="hero__float-kicker mono">Now</span>
+          <span class="hero__float-title">Backend Developer</span>
+          <span class="hero__float-sub">Inthera Consulting Group</span>
+        </span>
+      </div>
+
+      <div class="hero__float hero__float--code" aria-hidden="true">
+        <div class="hero__code-bar">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span class="mono">now.py</span>
+        </div>
+        <pre class="hero__code mono"><span class="t-key">role</span>  = <span class="t-str">"Backend Developer"</span>
+<span class="t-key">stack</span> = [<span class="t-str">"Python"</span>, <span class="t-str">"Django"</span>,
+         <span class="t-str">"PostgreSQL"</span>]</pre>
+      </div>
+
+      <div class="hero__float hero__float--stack" aria-hidden="true">
+        <Icon id="python" />
+        <Icon id="django" />
+        <Icon id="postgresql" />
+        <Icon id="docker" />
+      </div>
     </div>
   </div>
 
-  <HeroPortrait class="hero__portrait" />
-
-  <HeroFolio class="hero__folio" />
+  <a href="#about" class="hero__scroll mono" aria-label="Scroll to About">
+    <span>scroll</span>
+    <span class="hero__scroll-line" aria-hidden="true"></span>
+  </a>
 </section>
 
 <style>
-  /*
-   * Composition notes
-   * - The portrait's subject occupies ~23%–74% of the image width and starts
-   *   7% from its top. On desktop, the headline's second line is sized so it
-   *   ends before the head; nothing ever overlaps the face.
-   * - The portrait stands on the ink folio band and bleeds off the right
-   *   edge. Its white background is multiplied into the paper tone, so it must
-   *   only ever sit on paper — never over the ink band.
-   */
-
-  /* ---------------------------------------------------------------- */
-  /* Mobile: headline → intro → actions → portrait → folio            */
-  /* ---------------------------------------------------------------- */
-
   .hero {
-    --text-display: clamp(3rem, 15vw, 5.5rem);
+    --mx: 70%;
+    --my: 40%;
     position: relative;
-    padding-top: clamp(2.5rem, 1rem + 5vw, 4rem);
-    overflow-x: clip;
-  }
-
-  .hero__eyebrow {
     display: flex;
-    align-items: center;
-    gap: 0.875rem;
-    color: var(--color-mark);
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100svh;
+    padding: calc(var(--header-h) + 3rem) 0 5rem;
+    overflow: hidden;
   }
 
-  .hero__eyebrow-rule {
-    width: 2.5rem;
-    height: 1px;
-    background-color: currentColor;
+  /* Dot grid, lit around the pointer, with a warm glow behind the portrait. */
+  .hero__bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .hero__bg::before,
+  .hero__bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
+  .hero__bg::before {
+    background-image: radial-gradient(rgb(243 239 231 / 0.13) 1px, transparent 1.2px);
+    background-size: 26px 26px;
+    -webkit-mask-image: radial-gradient(
+      38rem circle at var(--mx) var(--my),
+      #000 0%,
+      rgb(0 0 0 / 0.35) 45%,
+      rgb(0 0 0 / 0.12) 100%
+    );
+    mask-image: radial-gradient(
+      38rem circle at var(--mx) var(--my),
+      #000 0%,
+      rgb(0 0 0 / 0.35) 45%,
+      rgb(0 0 0 / 0.12) 100%
+    );
+  }
+
+  .hero__bg::after {
+    background:
+      radial-gradient(40rem 30rem at 78% 42%, rgb(211 148 98 / 0.1), transparent 70%),
+      linear-gradient(to bottom, transparent 70%, var(--color-bg));
+  }
+
+  .hero__grid {
+    position: relative;
+    display: grid;
+    gap: 3.5rem;
+    align-items: center;
+  }
+
+  /* Copy ------------------------------------------------------------------ */
+  .hero__status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.375rem 0.875rem 0.375rem 0.75rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-full);
+    background-color: rgb(243 239 231 / 0.03);
+    color: var(--color-fg-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+  }
+
+  .hero__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+    animation: pulse-ring 2.4s var(--ease-out-expo) infinite;
+  }
+
+  .hero__role {
+    display: flex;
+    gap: 0.625rem;
+    margin-top: 2rem;
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.75rem;
+  }
+
+  .hero__role span {
+    color: var(--color-fg-subtle);
   }
 
   .hero__title {
-    position: relative;
-    z-index: 2;
-    display: grid;
-    grid-template-columns: subgrid;
-    margin-top: 1.5rem;
-    text-wrap: wrap;
+    margin-top: 1rem;
+    font-size: var(--text-display);
+    line-height: var(--text-display--line-height);
+    letter-spacing: var(--text-display--letter-spacing);
+    font-weight: 600;
   }
 
-  /* Each line is its own baseline mask: the inner text rises into it. The clip
-     is extended past the line box so ascenders, descenders and the italic
-     overhang are never cut once settled. */
   .hero__line {
     display: block;
-    grid-column: content;
-    clip-path: inset(-0.4em -0.6em -0.34em -0.3em);
+    padding-bottom: 0.08em;
+    overflow: hidden;
   }
 
-  .hero__line-inner {
-    display: block;
+  @media (min-width: 64rem) {
+    .hero__line {
+      white-space: nowrap;
+    }
   }
 
-  .hero__line--indent {
-    grid-column: col-start 2 / content-end;
-  }
-
-  .hero__title em {
-    font-style: italic;
-    font-weight: 360;
-    letter-spacing: -0.02em;
-  }
-
-  /* Signature: the headline's last full stop, in copper. It lands last. */
-  .hero__stop {
+  .hero__line > span {
     display: inline-block;
-    color: var(--color-signature);
   }
 
-  .hero__body {
-    margin-top: 2rem;
+  .hero__title .accent-word {
+    padding-right: 0.06em;
+    font-size: 1.04em;
   }
 
   .hero__intro {
-    max-width: 34ch;
+    max-width: 34rem;
+    margin-top: 1.75rem;
+    color: var(--color-fg-muted);
+    font-size: var(--text-lead);
+    line-height: var(--text-lead--line-height);
+  }
+
+  .hero__typer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    color: var(--color-fg-subtle);
+    font-size: 0.8125rem;
+  }
+
+  .hero__prompt {
+    color: var(--color-accent);
+  }
+
+  .hero__typed {
+    color: var(--color-fg);
+    font-weight: 500;
+  }
+
+  .hero__caret {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    margin-left: 2px;
+    vertical-align: -0.18em;
+    background-color: var(--color-accent);
+    animation: hero-caret 1.05s steps(1) infinite;
+  }
+
+  @keyframes hero-caret {
+    50% {
+      opacity: 0;
+    }
   }
 
   .hero__actions {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 0.75rem 1.75rem;
-    margin-top: 2rem;
-  }
-
-  .hero__portrait {
-    grid-column: col-start 2 / full-end;
-    justify-self: end;
-    width: 100%;
-    max-width: 30rem;
+    gap: 0.75rem;
     margin-top: 2.25rem;
   }
 
-  .hero__folio {
+  /* Visual ----------------------------------------------------------------- */
+  .hero__visual {
+    --rx: 0deg;
+    --ry: 0deg;
+    --px: 0;
+    --py: 0;
     position: relative;
+    justify-self: center;
+    width: min(100%, 25rem);
+    margin-inline: 1.5rem;
+    perspective: 1100px;
+  }
+
+  .hero__card {
+    position: relative;
+    margin: 0;
+    padding: 0.625rem;
+    border: 1px solid rgb(243 239 231 / 0.14);
+    border-radius: var(--radius-xl);
+    background: linear-gradient(160deg, rgb(243 239 231 / 0.09), rgb(243 239 231 / 0.02));
+    box-shadow:
+      0 40px 80px -40px rgb(0 0 0 / 0.8),
+      0 0 0 1px rgb(0 0 0 / 0.2);
+    transform: rotateX(var(--rx)) rotateY(var(--ry));
+    transform-style: preserve-3d;
+    transition: transform 900ms var(--ease-out-expo);
+  }
+
+  .is-tilting .hero__card {
+    transition-duration: 200ms;
+  }
+
+  .hero__photo {
+    overflow: hidden;
+    border-radius: calc(var(--radius-xl) - 0.5rem);
+    background-color: #ece5d8;
+    aspect-ratio: 4 / 4.6;
+  }
+
+  .hero__photo :global(picture),
+  .hero__photo :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero__photo :global(img) {
+    object-fit: cover;
+    object-position: 50% 30%;
+    mix-blend-mode: multiply;
+    transform: scale(1.06) translate3d(calc(var(--px) * -8px), calc(var(--py) * -8px), 0);
+    transition: transform 900ms var(--ease-out-expo);
+  }
+
+  .hero__caption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.875rem 0.5rem 0.25rem;
+  }
+
+  .hero__caption > span:first-child {
+    display: grid;
+  }
+
+  .hero__caption-name {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .hero__caption-role {
+    color: var(--color-fg-muted);
+    font-size: 0.8125rem;
+  }
+
+  .hero__caption-tag {
+    padding: 0.25rem 0.625rem;
+    border: 1px solid rgb(211 148 98 / 0.4);
+    border-radius: var(--radius-full);
+    color: var(--color-accent);
+    font-size: 0.6875rem;
+  }
+
+  .hero__glare {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      26rem circle at calc(50% + var(--px) * 50%) calc(50% + var(--py) * 50%),
+      rgb(255 255 255 / 0.1),
+      transparent 50%
+    );
+    opacity: 0;
+    transition: opacity var(--dur-base);
+    pointer-events: none;
+  }
+
+  .is-tilting .hero__glare {
+    opacity: 1;
+  }
+
+  /* Floating cards drift against the tilt for depth. */
+  .hero__float {
+    position: absolute;
     z-index: 2;
-    grid-column: full;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-md);
+    background-color: rgb(20 28 37 / 0.88);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 24px 48px -24px rgb(0 0 0 / 0.8);
+    transition: transform 900ms var(--ease-out-expo);
   }
 
-  /* ---------------------------------------------------------------- */
-  /* Tablet: headline set on two lines; intro and portrait share the  */
-  /* lower band, the portrait standing on the folio rule.             */
-  /* ---------------------------------------------------------------- */
+  .is-tilting .hero__float {
+    transition-duration: 250ms;
+  }
 
-  @media (min-width: 48rem) {
-    .hero {
-      --text-display: 9.4vw;
-      grid-template-rows: auto auto 1fr auto;
+  .hero__float--role {
+    top: 9%;
+    left: -1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 1rem 0.625rem 0.625rem;
+    transform: translate3d(calc(var(--px) * 18px), calc(var(--py) * 14px), 0);
+  }
+
+  .hero__float-mark {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-accent);
+    color: var(--color-ink-900);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .hero__float--role > span:last-child {
+    display: grid;
+    line-height: 1.25;
+  }
+
+  .hero__float-kicker {
+    color: var(--color-accent);
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .hero__float-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .hero__float-sub {
+    color: var(--color-fg-muted);
+    font-size: 0.75rem;
+  }
+
+  .hero__float--code {
+    right: -2.25rem;
+    bottom: 16%;
+    width: 16.5rem;
+    transform: translate3d(calc(var(--px) * 26px), calc(var(--py) * 20px), 0);
+  }
+
+  .hero__code-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.3125rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .hero__code-bar > span:not(.mono) {
+    width: 0.4375rem;
+    height: 0.4375rem;
+    border-radius: 50%;
+    background-color: var(--color-ink-600);
+  }
+
+  .hero__code-bar .mono {
+    margin-left: 0.375rem;
+    color: var(--color-fg-subtle);
+    font-size: 0.6875rem;
+  }
+
+  .hero__code {
+    margin: 0;
+    padding: 0.75rem 0.875rem 0.875rem;
+    color: var(--color-fg-muted);
+    font-size: 0.71875rem;
+    line-height: 1.6;
+    white-space: pre;
+  }
+
+  .t-key {
+    color: var(--color-cobalt);
+  }
+
+  .t-str {
+    color: var(--color-sage);
+  }
+
+  .hero__float--stack {
+    top: 46%;
+    right: -1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-full);
+    transform: translate3d(calc(var(--px) * -14px), calc(var(--py) * -12px), 0);
+  }
+
+  .hero__float--stack :global(.icon) {
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0.375rem;
+    border-radius: 50%;
+    background-color: rgb(243 239 231 / 0.06);
+    color: var(--color-fg);
+  }
+
+  /* Scroll cue */
+  .hero__scroll {
+    position: absolute;
+    bottom: 1.75rem;
+    left: 50%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.625rem;
+    color: var(--color-fg-subtle);
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    transform: translateX(-50%);
+  }
+
+  .hero__scroll-line {
+    position: relative;
+    width: 1px;
+    height: 2.5rem;
+    overflow: hidden;
+    background-color: var(--color-line-strong);
+  }
+
+  .hero__scroll-line::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: var(--color-accent);
+    animation: scroll-cue 2.2s var(--ease-out-expo) infinite;
+  }
+
+  @keyframes scroll-cue {
+    from {
+      transform: translateY(-100%);
     }
-
-    .hero__eyebrow {
-      grid-row: 1;
-    }
-
-    .hero__title {
-      grid-row: 2;
-      margin-top: 1.75rem;
-      white-space: nowrap;
-    }
-
-    .hero__body {
-      grid-column: col-start 2 / span 6;
-      grid-row: 3;
-      align-self: end;
-      margin-top: 3rem;
-      padding-bottom: 2.5rem;
-    }
-
-    .hero__portrait {
-      grid-column: col-start 8 / full-end;
-      grid-row: 3;
-      align-self: end;
-      max-width: none;
-      margin-top: 2rem;
-    }
-
-    .hero__folio {
-      grid-row: 4;
+    to {
+      transform: translateY(100%);
     }
   }
 
-  /* ---------------------------------------------------------------- */
-  /* Desktop: the headline steps down towards the portrait; the       */
-  /* portrait rises beside line 2, bleeds off the right edge and      */
-  /* stands on the folio rule. Its height is capped by the viewport   */
-  /* so the folio stays in the first screen.                          */
-  /* ---------------------------------------------------------------- */
+  /* Phones: smaller floating cards that stay inside the screen. */
+  @media (max-width: 47.99rem) {
+    .hero__visual {
+      width: min(100% - 2rem, 21rem);
+    }
+
+    .hero__float--role {
+      left: -1rem;
+      top: 5%;
+    }
+
+    .hero__float--code {
+      right: -1rem;
+      bottom: 14%;
+      width: 13.5rem;
+    }
+
+    .hero__code {
+      font-size: 0.625rem;
+    }
+
+    .hero__float--stack {
+      display: none;
+    }
+  }
 
   @media (min-width: 64rem) {
-    .hero {
-      /* Fitted so line 2 always clears the portrait's head (≥ ~45px). */
-      --text-display: clamp(4.5rem, 8.17vw - 0.6rem, 7.5rem);
-      --portrait-h: clamp(26rem, calc(100svh - var(--header-h) - 15rem), min(43vw, 42rem));
-      min-height: calc(100svh - var(--header-h));
-      grid-template-rows: auto auto minmax(2rem, 1fr) auto auto;
-      padding-top: clamp(2.5rem, 0.5rem + 3.5vw, 4.5rem);
+    .hero__grid {
+      grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+      gap: 3rem;
     }
 
     .hero__title {
-      margin-top: 1.75rem;
+      font-size: clamp(3.5rem, 0.4rem + 5.4vw, 6rem);
     }
 
-    .hero__body {
-      grid-column: col-start 2 / span 5;
-      grid-row: 4;
-      margin-top: 0;
-      padding-bottom: 3.25rem;
+    .hero__visual {
+      justify-self: end;
+      margin-right: 2rem;
     }
 
-    .hero__intro {
-      max-width: 35ch;
-    }
-
-    .hero__portrait {
-      grid-column: col-start 8 / full-end;
-      grid-row: 2 / 5;
-      align-self: end;
-      width: auto;
-      margin-top: 0;
-    }
-
-    .hero__portrait :global(.portrait__img) {
-      width: auto;
-      height: var(--portrait-h);
-    }
-
-    .hero__folio {
-      grid-row: 5;
+    .hero__scroll {
+      display: flex;
     }
   }
 </style>

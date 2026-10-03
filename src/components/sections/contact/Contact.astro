@@ -1,0 +1,207 @@
+---
+/**
+ * Contact and footer, kept compact for now: one invitation, the email
+ * (placeholder until the real address is set in data/site.ts) with a copy
+ * button, availability, and a small footer.
+ */
+import Section from "@/components/layout/Section.astro";
+import Button from "@/components/ui/Button.astro";
+import { contactHref, nav, site } from "@/data/site";
+
+const year = new Date().getFullYear();
+---
+
+<Section id="contact" labelledBy="contact-title" surface="alt">
+  <div class="ct spot" data-spotlight data-reveal>
+    <p class="ct__kicker mono">
+      <span>05</span> Contact
+    </p>
+    <h2 id="contact-title" class="ct__title">
+      Let’s build something <span class="accent-word">useful.</span>
+    </h2>
+    <p class="ct__text">
+      {site.availability.join(" · ")}. If you have a role, a project or a problem worth solving, I’d
+      like to hear about it.
+    </p>
+    <div class="ct__actions">
+      <Button href={contactHref} arrow="up-right" magnetic>
+        Email me
+      </Button>
+      <button type="button" class="ct__copy mono" data-copy={site.contact.email}>
+        <span data-copy-label>{site.contact.email}</span>
+        <span class="ct__copy-hint" aria-hidden="true">
+          copy
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <footer class="ft">
+    <p class="ft__name">
+      <span class="ft__mark mono" aria-hidden="true">
+        PK
+      </span>
+      {site.name} · {site.role}
+    </p>
+    <nav aria-label="Footer">
+      <ul role="list" class="ft__links">
+        {nav.map((item) => (
+          <li>
+            <a href={item.href}>{item.label}</a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+    <p class="ft__meta mono">© {year} · Built with Astro</p>
+  </footer>
+</Section>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>("[data-copy]").forEach((button) => {
+    const label = button.querySelector<HTMLElement>("[data-copy-label]")!;
+    const original = label.textContent;
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copy!);
+        label.textContent = "Copied to clipboard";
+      } catch {
+        label.textContent = "Copy failed — select the address instead";
+      }
+      setTimeout(() => (label.textContent = original), 2000);
+    });
+  });
+</script>
+
+<style>
+  .ct {
+    padding: clamp(2rem, 1rem + 4vw, 4.5rem);
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-xl);
+    background:
+      radial-gradient(60% 90% at 0% 0%, rgb(211 148 98 / 0.14), transparent 70%),
+      var(--color-surface);
+  }
+
+  .ct__kicker {
+    display: flex;
+    gap: 0.75rem;
+    color: var(--color-fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.6875rem;
+  }
+
+  .ct__kicker span {
+    color: var(--color-accent);
+  }
+
+  .ct__title {
+    max-width: 16ch;
+    margin-top: 1.25rem;
+    font-size: var(--text-title);
+    line-height: var(--text-title--line-height);
+    letter-spacing: var(--text-title--letter-spacing);
+    font-weight: 600;
+  }
+
+  .ct__text {
+    max-width: 46ch;
+    margin-top: 1.25rem;
+    color: var(--color-fg-muted);
+    font-size: var(--text-lead);
+    line-height: var(--text-lead--line-height);
+  }
+
+  .ct__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+    margin-top: 2rem;
+  }
+
+  .ct__copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3rem;
+    padding: 0 1.125rem;
+    border: 1px dashed var(--color-line-strong);
+    border-radius: var(--radius-full);
+    color: var(--color-fg-muted);
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition:
+      border-color var(--dur-fast),
+      color var(--dur-fast);
+  }
+
+  .ct__copy:hover {
+    border-color: var(--color-accent);
+    color: var(--color-fg);
+  }
+
+  .ct__copy {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .ct__copy [data-copy-label] {
+    overflow-wrap: anywhere;
+  }
+
+  .ct__copy-hint {
+    color: var(--color-accent);
+  }
+
+  .ft {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    margin-top: clamp(3rem, 2rem + 3vw, 5rem);
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--color-line);
+    color: var(--color-fg-muted);
+    font-size: var(--text-small);
+  }
+
+  .ft__name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .ft__mark {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1px solid rgb(211 148 98 / 0.5);
+    border-radius: var(--radius-xs);
+    color: var(--color-accent);
+    font-size: 0.625rem;
+  }
+
+  .ft__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+  }
+
+  .ft__links a {
+    display: inline-flex;
+    min-height: 2.75rem;
+    align-items: center;
+    transition: color var(--dur-fast);
+  }
+
+  .ft__links a:hover {
+    color: var(--color-fg);
+  }
+
+  .ft__meta {
+    color: var(--color-fg-subtle);
+  }
+</style>

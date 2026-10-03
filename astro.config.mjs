@@ -46,5 +46,26 @@ export default defineConfig({
         ],
       },
     },
+    {
+      // Technical annotations only (diagram labels, figure captions).
+      provider: fontProviders.local(),
+      name: "IBM Plex Mono",
+      cssVariable: "--font-plex-mono",
+      fallbacks: ["ui-monospace", "Menlo", "Consolas", "monospace"],
+      options: {
+        variants: [
+          {
+            src: ["@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2"],
+            weight: "400",
+            style: "normal",
+          },
+          {
+            src: ["@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2"],
+            weight: "500",
+            style: "normal",
+          },
+        ],
+      },
+    },
   ],
 });

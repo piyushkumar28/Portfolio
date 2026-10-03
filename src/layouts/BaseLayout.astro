@@ -31,8 +31,8 @@ const personSchema = {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content="#16212b" />
-    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#0d1218" />
+    <meta name="color-scheme" content="dark" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
     <meta property="og:type" content="website" />
@@ -49,7 +49,7 @@ const personSchema = {
           const css = getComputedStyle(root);
           const serif = css.getPropertyValue("--font-newsreader");
           const sans = css.getPropertyValue("--font-instrument-sans");
-          const faces = [`380 1em ${serif}`, `italic 360 1em ${serif}`, `500 1em ${sans}`];
+          const faces = [`italic 400 1em ${serif}`, `600 1em ${sans}`, `400 1em ${sans}`];
           const timeout = new Promise((resolve) => setTimeout(resolve, 700));
           Promise.race([Promise.all(faces.map((f) => document.fonts.load(f))), timeout])
             .catch(() => {})
@@ -57,8 +57,9 @@ const personSchema = {
         });
       })();
     </script>
-    <Font cssVariable="--font-newsreader" preload={[{ style: "normal" }]} />
+    <Font cssVariable="--font-newsreader" preload={[{ style: "italic" }]} />
     <Font cssVariable="--font-instrument-sans" preload />
+    <Font cssVariable="--font-plex-mono" />
 
     <script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
   </head>

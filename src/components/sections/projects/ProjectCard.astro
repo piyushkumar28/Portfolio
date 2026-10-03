@@ -1,0 +1,518 @@
+---
+/**
+ * One project, presented like a product.
+ *
+ * Preview (left, or right on alternate rows): a frame tinted with the
+ * project's hue holding an illustrative mockup. The mockup sits tilted in
+ * perspective and straightens toward the pointer on hover, the frame title
+ * drifts the other way (parallax via scripts/interact.ts), the mockup comes
+ * alive, and a strip slides up revealing the stack.
+ *
+ * Details (beside it): index, category, name, summary, stack chips, actions,
+ * and a case-study track (Problem → Product → Engineering → Technology →
+ * Result) that expands in place. Steps light up as their content is
+ * confirmed in data/projects.ts; the rest read "in preparation".
+ */
+import Icon from "@/components/ui/Icon.astro";
+import Button from "@/components/ui/Button.astro";
+import { contactHref } from "@/data/site";
+import type { Project } from "@/data/projects";
+import ProjectMock from "./ProjectMock.astro";
+
+interface Props {
+  project: Project;
+  index: number;
+  total: number;
+}
+
+const { project: p, index, total } = Astro.props;
+const n = String(index).padStart(2, "0");
+const of = String(total).padStart(2, "0");
+const slug = p.name.split(" ")[0].toLowerCase();
+
+const steps = [
+  { label: "Problem", value: p.problem },
+  { label: "Product", value: p.summary },
+  { label: "Engineering", value: p.engineering },
+  {
+    label: "Technology",
+    value: p.stack.length ? p.stack.map((s) => s.name).join(", ") : undefined,
+  },
+  { label: "Result", value: p.result },
+];
+const complete = steps.every((s) => s.value);
+const ask = `${contactHref}?subject=${encodeURIComponent(`About ${p.name}`)}`;
+---
+
+<li class="pj" data-category={p.category} style={`--h: ${p.hue}`}>
+  <article class="pj__inner" aria-labelledby={`pj-${p.id}`}>
+    <div class="pj__frame spot" data-spotlight data-tilt-area>
+      <span class="pj__grid" aria-hidden="true"></span>
+      <div class="pj__frame-head" aria-hidden="true">
+        <span class="mono">
+          {n} / {of}
+        </span>
+        <span class="pj__tag mono">Illustrative mockup</span>
+      </div>
+      <p class="pj__frame-title" aria-hidden="true">
+        {p.name}
+      </p>
+      <div class="pj__stage">
+        <div class="pj__win" data-tilt="6">
+          <ProjectMock mock={p.mock} label={`~/${slug}`} />
+        </div>
+      </div>
+      <div class="pj__reveal" aria-hidden="true">
+        <span class="mono pj__reveal-label">{p.category}</span>
+        <span class="pj__reveal-items">
+          {p.stack.length > 0 ? (
+            p.stack.map((s) => (
+              <span class="chip">
+                <Icon id={s.id} />
+                {s.name}
+              </span>
+            ))
+          ) : (
+            <span class="pj__reveal-note">Open the case study ↘</span>
+          )}
+        </span>
+      </div>
+    </div>
+
+    <div class="pj__info">
+      <p class="pj__meta">
+        <span class="pj__index mono">{n}</span>
+        <span class="pj__category mono">{p.category}</span>
+      </p>
+      <h3 id={`pj-${p.id}`} class="pj__name">
+        {p.name}
+      </h3>
+      <p class="pj__summary">{p.summary}</p>
+
+      {p.stack.length > 0 && (
+        <ul class="pj__stack" role="list" aria-label="Technology" data-stagger>
+          {p.stack.map((s) => (
+            <li class="chip">
+              <Icon id={s.id} />
+              {s.name}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div class="pj__actions">
+        <button
+          type="button"
+          class="pj__toggle"
+          aria-expanded="false"
+          aria-controls={`pj-file-${p.id}`}
+          data-case-toggle
+        >
+          <span class="pj__toggle-icon" aria-hidden="true"></span>
+          Case study
+        </button>
+        {p.links?.live && (
+          <Button href={p.links.live} variant="ghost" arrow="up-right" size="sm">
+            Live
+          </Button>
+        )}
+        {p.links?.code && (
+          <Button href={p.links.code} variant="ghost" arrow="up-right" size="sm">
+            Code
+          </Button>
+        )}
+        <Button href={ask} variant="ghost" arrow="up-right" size="sm">
+          Ask me about it
+        </Button>
+      </div>
+
+      <div class="pj__file" id={`pj-file-${p.id}`} data-case-file>
+        <div class="pj__file-inner">
+          <ol class="pj__track" role="list">
+            {steps.map((s, i) => (
+              <li class:list={["pj__step", { "is-done": s.value }]}>
+                <span class="pj__step-dot" aria-hidden="true" />
+                <span class="pj__step-label mono">
+                  0{i + 1} {s.label}
+                </span>
+                <span class="pj__step-value">{s.value ?? "In preparation"}</span>
+              </li>
+            ))}
+          </ol>
+          {!complete && (
+            <p class="pj__file-note mono">
+              Full case study in preparation — ask me about it in the meantime.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  </article>
+</li>
+
+<style>
+  .pj__inner {
+    display: grid;
+    gap: 1.75rem;
+    align-items: center;
+  }
+
+  /* Preview frame ---------------------------------------------------------- */
+  .pj__frame {
+    --rx: 0deg;
+    --ry: 0deg;
+    --px: 0;
+    --py: 0;
+    position: relative;
+    aspect-ratio: 16 / 11.5;
+    overflow: hidden;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-xl);
+    background:
+      radial-gradient(75% 85% at 8% 0%, rgb(var(--h) / 0.42), transparent 72%),
+      radial-gradient(60% 70% at 100% 100%, rgb(var(--h) / 0.2), transparent 70%),
+      var(--color-ink-800);
+    transition:
+      border-color var(--dur-base),
+      transform var(--dur-slow) var(--ease-out-expo);
+  }
+
+  .pj__grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgb(243 239 231 / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(243 239 231 / 0.05) 1px, transparent 1px);
+    background-size: 32px 32px;
+    -webkit-mask-image: radial-gradient(90% 80% at 30% 20%, #000, transparent 80%);
+    mask-image: radial-gradient(90% 80% at 30% 20%, #000, transparent 80%);
+    pointer-events: none;
+  }
+
+  .pj__frame-head {
+    position: absolute;
+    inset: 1.125rem 1.25rem auto;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    color: rgb(243 239 231 / 0.6);
+    font-size: 0.6875rem;
+  }
+
+  .pj__tag {
+    padding: 0.125rem 0.5rem;
+    border: 1px solid rgb(243 239 231 / 0.18);
+    border-radius: var(--radius-full);
+    font-size: 0.625rem;
+  }
+
+  .pj__frame-title {
+    position: absolute;
+    top: 3rem;
+    left: 1.25rem;
+    z-index: 2;
+    max-width: 15ch;
+    font-size: clamp(1.25rem, 0.85rem + 1.6vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1.04;
+    letter-spacing: -0.035em;
+    transform: translate3d(calc(var(--px) * -10px), calc(var(--py) * -6px), 0);
+    transition: transform 900ms var(--ease-out-expo);
+  }
+
+  .pj__stage {
+    position: absolute;
+    top: 34%;
+    right: -4%;
+    bottom: -8%;
+    left: 8%;
+    z-index: 1;
+    perspective: 1300px;
+  }
+
+  .pj__win {
+    width: 100%;
+    height: 100%;
+    transform: rotateX(9deg) rotateY(-9deg) rotateZ(1.5deg) translate3d(0, 2%, 0);
+    transform-origin: 30% 0%;
+    transition: transform 1100ms var(--ease-out-expo);
+  }
+
+  .pj:is(:hover, :focus-within) .pj__win {
+    transform: rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(0deg)
+      translate3d(calc(var(--px) * 10px), -6%, 0);
+  }
+
+  :global(.is-tilting) .pj__win,
+  :global(.is-tilting) .pj__frame-title {
+    transition-duration: 300ms;
+  }
+
+  .pj:is(:hover, :focus-within) .pj__frame {
+    border-color: rgb(var(--h) / 0.5);
+  }
+
+  /* Tech reveal strip */
+  .pj__reveal {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 2.5rem 1.25rem 1.125rem;
+    background: linear-gradient(to top, rgb(13 18 24 / 0.95) 35%, transparent);
+    transform: translateY(101%);
+    transition: transform var(--dur-slow) var(--ease-out-expo);
+  }
+
+  .pj:is(:hover, :focus-within) .pj__reveal {
+    transform: none;
+  }
+
+  .pj__reveal-label {
+    color: rgb(var(--h));
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.6875rem;
+  }
+
+  .pj__reveal-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+
+  .pj__reveal-note {
+    color: var(--color-fg-muted);
+    font-size: 0.8125rem;
+  }
+
+  /* Details ----------------------------------------------------------------- */
+  .pj__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .pj__index {
+    color: rgb(var(--h));
+  }
+
+  .pj__category {
+    padding: 0.1875rem 0.625rem;
+    border: 1px solid rgb(var(--h) / 0.4);
+    border-radius: var(--radius-full);
+    background-color: rgb(var(--h) / 0.08);
+    color: var(--color-fg);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.625rem;
+  }
+
+  .pj__name {
+    margin-top: 1rem;
+    font-size: var(--text-heading);
+    line-height: var(--text-heading--line-height);
+    letter-spacing: var(--text-heading--letter-spacing);
+    font-weight: 600;
+  }
+
+  .pj__summary {
+    max-width: 42ch;
+    margin-top: 0.875rem;
+    color: var(--color-fg-muted);
+    font-size: var(--text-lead);
+    line-height: var(--text-lead--line-height);
+  }
+
+  .pj__stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+  }
+
+  .pj__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .pj__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 2.75rem;
+    padding: 0 1.125rem 0 0.875rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      border-color var(--dur-fast),
+      background-color var(--dur-fast);
+  }
+
+  .pj__toggle:hover,
+  .pj__toggle[aria-expanded="true"] {
+    border-color: rgb(var(--h) / 0.6);
+    background-color: rgb(var(--h) / 0.08);
+  }
+
+  /* A plus that turns into a minus. */
+  .pj__toggle-icon {
+    position: relative;
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+
+  .pj__toggle-icon::before,
+  .pj__toggle-icon::after {
+    content: "";
+    position: absolute;
+    inset: 50% 0 auto;
+    height: 1.5px;
+    margin-top: -0.75px;
+    background-color: currentColor;
+    transition: transform var(--dur-base) var(--ease-out-expo);
+  }
+
+  .pj__toggle-icon::after {
+    transform: rotate(90deg);
+  }
+
+  .pj__toggle[aria-expanded="true"] .pj__toggle-icon::after {
+    transform: rotate(0deg);
+  }
+
+  /* Case file: expands in place (grid rows 0fr → 1fr). Open without JS. */
+  .pj__file {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows var(--dur-slow) var(--ease-out-expo);
+  }
+
+  :global(.js) .pj__file:not(.is-open) {
+    grid-template-rows: 0fr;
+  }
+
+  :global(.js) .pj__file:not(.is-open) .pj__file-inner {
+    visibility: hidden;
+  }
+
+  .pj__file-inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .pj__track {
+    display: grid;
+    margin-top: 1.5rem;
+    padding: 0.25rem 0 0.25rem 0.25rem;
+  }
+
+  .pj__step {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .pj__step::before {
+    content: "";
+    position: absolute;
+    top: 0.75rem;
+    bottom: -0.25rem;
+    left: 0.25rem;
+    width: 1px;
+    background-color: var(--color-line-strong);
+  }
+
+  .pj__step:last-child::before {
+    display: none;
+  }
+
+  .pj__step-dot {
+    grid-row: span 2;
+    width: 0.5625rem;
+    height: 0.5625rem;
+    margin-top: 0.25rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: 50%;
+    background-color: var(--color-bg);
+  }
+
+  .pj__step.is-done .pj__step-dot {
+    border-color: rgb(var(--h));
+    background-color: rgb(var(--h));
+  }
+
+  .pj__step-label {
+    color: var(--color-fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.625rem;
+  }
+
+  .pj__step.is-done .pj__step-label {
+    color: rgb(var(--h));
+  }
+
+  .pj__step-value {
+    margin-top: 0.25rem;
+    color: var(--color-fg-subtle);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .pj__step.is-done .pj__step-value {
+    color: var(--color-fg);
+  }
+
+  .pj__file-note {
+    padding: 0.75rem 0 0.25rem;
+    color: var(--color-fg-subtle);
+    font-size: 0.6875rem;
+  }
+
+  @media (max-width: 47.99rem) {
+    .pj__frame {
+      aspect-ratio: 1 / 1.02;
+    }
+
+    .pj__stage {
+      top: 38%;
+      left: 6%;
+    }
+  }
+
+  /* Touch: no hover, so the strip simply shows. */
+  @media (hover: none) {
+    .pj__reveal {
+      transform: none;
+    }
+  }
+
+  @media (min-width: 64rem) {
+    .pj__inner {
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+      gap: clamp(2.5rem, 1rem + 3vw, 4.5rem);
+    }
+
+    /* Alternate sides for rhythm. */
+    .pj:nth-child(even of :not([hidden])) .pj__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    }
+
+    .pj:nth-child(even of :not([hidden])) .pj__frame {
+      order: 2;
+    }
+  }
+</style>

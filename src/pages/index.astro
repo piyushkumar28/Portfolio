@@ -6,6 +6,8 @@ import Hero from "@/components/sections/hero/Hero.astro";
 import About from "@/components/sections/about/About.astro";
 import Experience from "@/components/sections/experience/Experience.astro";
 import Skills from "@/components/sections/skills/Skills.astro";
+import Projects from "@/components/sections/projects/Projects.astro";
+import Contact from "@/components/sections/contact/Contact.astro";
 ---
 
 <BaseLayout>
@@ -16,9 +18,12 @@ import Skills from "@/components/sections/skills/Skills.astro";
     <About />
     <Experience />
     <Skills />
+    <Projects />
+    <Contact />
   </main>
 </BaseLayout>
 
 <script>
   import "@/scripts/reveal";
+  import "@/scripts/interact";
 </script>

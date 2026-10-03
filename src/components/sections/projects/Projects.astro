@@ -1,0 +1,171 @@
+---
+/**
+ * Projects: the centrepiece. Category filters (with counts and a sliding
+ * pill) above a list of product-style cards (ProjectCard). Filtering hides
+ * cards and brings the rest back in with a short rise; alternate cards swap
+ * sides on wide screens.
+ */
+import Section from "@/components/layout/Section.astro";
+import SectionHead from "@/components/layout/SectionHead.astro";
+import { categories, projects } from "@/data/projects";
+import ProjectCard from "./ProjectCard.astro";
+
+const filters = [
+  { id: "all", label: "All", count: projects.length },
+  ...categories.map((c) => ({
+    id: c,
+    label: c === "Platform" ? "Platforms" : c,
+    count: projects.filter((p) => p.category === c).length,
+  })),
+];
+---
+
+<Section id="projects" labelledBy="projects-title">
+  <SectionHead index="04" label="Projects" titleId="projects-title">
+    Things I’ve <span class="accent-word">built.</span>
+    <Fragment slot="intro">
+      Platforms, applied AI and research. Previews are illustrative while the full case studies are
+      written up.
+    </Fragment>
+  </SectionHead>
+
+  <div class="pjs" data-projects>
+    <div class="pjs__filters" role="group" aria-label="Filter projects" data-reveal>
+      <span class="pjs__pill" aria-hidden="true" data-pill></span>
+      {filters.map((f, i) => (
+        <button
+          type="button"
+          class="pjs__filter"
+          data-filter={f.id}
+          aria-pressed={i === 0 ? "true" : "false"}
+        >
+          {f.label}
+          <span class="pjs__count mono">{f.count}</span>
+        </button>
+      ))}
+    </div>
+    <p class="sr-only" aria-live="polite" data-status></p>
+
+    <ol class="pjs__list" role="list">
+      {projects.map((p, i) => (
+        <ProjectCard project={p} index={i + 1} total={projects.length} />
+      ))}
+    </ol>
+  </div>
+</Section>
+
+<script>
+  document.querySelectorAll<HTMLElement>("[data-projects]").forEach((root) => {
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>("[data-filter]")];
+    const pill = root.querySelector<HTMLElement>("[data-pill]")!;
+    const status = root.querySelector<HTMLElement>("[data-status]")!;
+    const cards = [...root.querySelectorAll<HTMLElement>(".pj")];
+
+    const placePill = () => {
+      const on = buttons.find((b) => b.getAttribute("aria-pressed") === "true")!;
+      pill.style.width = `${on.offsetWidth}px`;
+      pill.style.height = `${on.offsetHeight}px`;
+      pill.style.transform = `translate(${on.offsetLeft}px, ${on.offsetTop}px)`;
+    };
+
+    for (const button of buttons) {
+      button.addEventListener("click", () => {
+        const id = button.dataset.filter!;
+        buttons.forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+        let shown = 0;
+        for (const card of cards) {
+          const show = id === "all" || card.dataset.category === id;
+          card.hidden = !show;
+          if (show) {
+            shown++;
+            card.classList.remove("is-entering");
+            void card.offsetWidth;
+            card.classList.add("is-entering");
+          }
+        }
+        status.textContent = `${shown} ${shown === 1 ? "project" : "projects"} shown.`;
+        placePill();
+      });
+    }
+
+    // Case studies expand in place.
+    root.querySelectorAll<HTMLButtonElement>("[data-case-toggle]").forEach((toggle) => {
+      const file = root.querySelector<HTMLElement>(`#${toggle.getAttribute("aria-controls")}`)!;
+      toggle.addEventListener("click", () => {
+        const open = toggle.getAttribute("aria-expanded") !== "true";
+        toggle.setAttribute("aria-expanded", String(open));
+        file.classList.toggle("is-open", open);
+      });
+    });
+
+    new ResizeObserver(placePill).observe(root);
+    document.fonts?.ready.then(placePill);
+  });
+</script>
+
+<style>
+  .pjs {
+    margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+  }
+
+  .pjs__filters {
+    position: relative;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.3125rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-ink-850);
+  }
+
+  .pjs__pill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: calc(var(--radius-lg) - 0.3125rem);
+    background-color: var(--color-raised);
+    box-shadow: inset 0 0 0 1px var(--color-line-strong);
+    transition:
+      transform var(--dur-base) var(--ease-out-expo),
+      width var(--dur-base) var(--ease-out-expo);
+  }
+
+  .pjs__filter {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    color: var(--color-fg-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color var(--dur-fast);
+  }
+
+  .pjs__filter:hover,
+  .pjs__filter[aria-pressed="true"] {
+    color: var(--color-fg);
+  }
+
+  .pjs__count {
+    color: var(--color-fg-subtle);
+    font-size: 0.6875rem;
+  }
+
+  .pjs__filter[aria-pressed="true"] .pjs__count {
+    color: var(--color-accent);
+  }
+
+  .pjs__list {
+    display: grid;
+    gap: clamp(4rem, 3rem + 4vw, 7.5rem);
+    margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
+  }
+
+  .pjs__list :global(.pj.is-entering) {
+    animation: enter-scale var(--dur-slow) var(--ease-out-expo) both;
+  }
+</style>

@@ -9,6 +9,7 @@
   html {
     background-color: var(--color-bg);
     color: var(--color-fg);
+    color-scheme: dark;
     font-family: var(--font-sans);
     font-size: 100%;
     -webkit-font-smoothing: antialiased;
@@ -26,11 +27,11 @@
 
   body {
     min-height: 100svh;
+    overflow-x: clip;
     background-color: var(--color-bg);
     font-size: var(--text-body);
     line-height: var(--text-body--line-height);
     font-kerning: normal;
-    font-optical-sizing: auto;
   }
 
   h1,
@@ -43,34 +44,35 @@
     text-wrap: pretty;
   }
 
-  /* Inverts within every tone. */
   ::selection {
-    background-color: var(--color-fg);
-    color: var(--color-bg);
+    background-color: var(--color-accent);
+    color: var(--color-ink-900);
   }
 
   :focus-visible {
     outline: 2px solid var(--color-accent);
-    outline-offset: 4px;
+    outline-offset: 3px;
     border-radius: var(--radius-xs);
   }
 
   [id] {
-    scroll-margin-top: 1.5rem;
+    scroll-margin-top: calc(var(--header-h) + 1.5rem);
   }
 }
 
 /* ------------------------------------------------------------------ */
-/* Editorial grid                                                      */
-/*                                                                     */
-/* Full-bleed outer tracks around N content columns. Named lines:      */
-/*   full-start · content-start · col-start 1…N · content-end · full-end */
-/* e.g. `grid-column: col-start 3 / span 4` or                         */
-/*      `grid-column: col-start 9 / full-end` (bleeds to the edge).    */
-/* Subgrids inherit these names.                                       */
+/* Layout                                                              */
 /* ------------------------------------------------------------------ */
 
 @layer components {
+  .container {
+    width: 100%;
+    max-width: calc(var(--content-max) + 2 * var(--gutter));
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* Kept for components still on the 12-column grid. */
   .grid-editorial {
     --cols: 6;
     display: grid;
@@ -101,10 +103,19 @@
 /* Typography utilities                                                */
 /* ------------------------------------------------------------------ */
 
+/* The serif is an accent voice: a word or two in italics, never body copy. */
 @utility font-display {
   font-family: var(--font-serif);
   font-weight: 380;
   font-optical-sizing: auto;
+}
+
+@utility accent-word {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--color-accent);
 }
 
 @utility label {
@@ -117,20 +128,111 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Technical annotation voice: kickers, chips, diagram labels. */
+@utility mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono);
+  line-height: var(--text-mono--line-height);
+  letter-spacing: var(--text-mono--letter-spacing);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
 @utility numerals-tabular {
   font-variant-numeric: lining-nums tabular-nums;
 }
 
 /* ------------------------------------------------------------------ */
+/* Shared surfaces                                                     */
+/* ------------------------------------------------------------------ */
+
+@layer components {
+  /* A card whose border lights up under the pointer (scripts/interact.ts
+     keeps --mx / --my on [data-spotlight] elements). */
+  .spot {
+    --mx: 50%;
+    --my: 50%;
+    position: relative;
+    isolation: isolate;
+  }
+
+  .spot::before,
+  .spot::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--dur-base) var(--ease-out-expo);
+  }
+
+  /* Lit border. */
+  .spot::before {
+    z-index: 1;
+    padding: 1px;
+    background: radial-gradient(
+      22rem circle at var(--mx) var(--my),
+      rgb(211 148 98 / 0.55),
+      transparent 55%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+  }
+
+  /* Soft wash. */
+  .spot::after {
+    z-index: -1;
+    background: radial-gradient(
+      28rem circle at var(--mx) var(--my),
+      rgb(243 239 231 / 0.045),
+      transparent 60%
+    );
+  }
+
+  .spot:hover::before,
+  .spot:hover::after,
+  .spot:focus-within::before {
+    opacity: 1;
+  }
+
+  /* Small technical tag. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 1.875rem;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-full);
+    background-color: rgb(243 239 231 / 0.03);
+    color: var(--color-fg);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .chip svg {
+    width: 0.9375rem;
+    height: 0.9375rem;
+    flex: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Motion                                                              */
 /*                                                                     */
-/* One vocabulary: type rises from its baseline, rules draw from the   */
-/* left, the portrait emerges from the band it stands on.              */
-/*                                                                     */
-/* Load choreography — [data-enter="rise|mask|draw|emerge|stamp"]:     */
-/* runs only with JS (html.js) and starts once fonts are in            */
-/* (html.is-ready), so type never swaps faces mid-reveal. Without JS   */
-/* everything is static and visible.                                   */
+/* Load choreography — [data-enter="rise|mask|draw|emerge|stamp"] —    */
+/* runs only with JS (html.js) once fonts are in (html.is-ready).      */
+/* Scroll reveals — [data-reveal], and [data-stagger] whose children   */
+/* arrive one after another (--i is set by script).                    */
+/* Without JS everything is static and visible.                        */
 /* ------------------------------------------------------------------ */
 
 @keyframes enter-rise {
@@ -140,7 +242,6 @@
   }
 }
 
-/* Used on the inner span of a line whose wrapper clips at the baseline. */
 @keyframes enter-mask {
   from {
     transform: translate3d(0, calc(100% + 0.55em), 0);
@@ -168,6 +269,23 @@
   from {
     opacity: 0;
     transform: translate3d(0, -0.14em, 0);
+  }
+}
+
+@keyframes enter-scale {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 1rem, 0) scale(0.96);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(211 148 98 / 0.55);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 0.5rem rgb(211 148 98 / 0);
   }
 }
 
@@ -209,15 +327,25 @@
     animation-name: enter-stamp;
   }
 
-  /* Scroll reveal: hidden only once JS is confirmed. */
-  [data-reveal] {
+  .js [data-enter="scale"] {
+    --enter-dur: 1000ms;
+    animation-name: enter-scale;
+  }
+
+  [data-reveal],
+  [data-stagger] > * {
     transition:
       opacity var(--dur-slow) var(--ease-editorial),
       transform var(--dur-slow) var(--ease-editorial);
     transition-delay: var(--delay, 0ms);
   }
 
-  .js [data-reveal]:not(.is-revealed) {
+  [data-stagger] > * {
+    transition-delay: calc(var(--stagger-base, 0ms) + var(--i, 0) * var(--stagger, 70ms));
+  }
+
+  .js [data-reveal]:not(.is-revealed),
+  .js [data-stagger]:not(.is-revealed) > * {
     opacity: 0;
     transform: translate3d(0, 1.25rem, 0);
   }
@@ -229,6 +357,7 @@
   *::after {
     animation-duration: 1ms !important;
     animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
     transition-delay: 0ms !important;
   }
@@ -237,7 +366,8 @@
     animation: none !important;
   }
 
-  .js [data-reveal]:not(.is-revealed) {
+  .js [data-reveal]:not(.is-revealed),
+  .js [data-stagger]:not(.is-revealed) > * {
     opacity: 1;
     transform: none;
   }

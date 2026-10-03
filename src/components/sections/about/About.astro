@@ -1,143 +1,189 @@
 ---
+/**
+ * About, in a few seconds: one line on how I work, three principles as cards
+ * (lit border under the pointer, icon that comes alive on hover/focus), and
+ * an at-a-glance strip of facts.
+ */
 import Section from "@/components/layout/Section.astro";
-import SectionHeader from "@/components/layout/SectionHeader.astro";
-import AboutPillar from "./AboutPillar.astro";
+import SectionHead from "@/components/layout/SectionHead.astro";
+import { site } from "@/data/site";
 
-const pillars = [
+const principles = [
   {
-    title: "Problem Solving",
-    text: "I start with the problem, not the tool. Breaking something complicated into smaller, clearer questions is where most of my progress happens — and the best answer is often the simplest one that works.",
+    title: "Problem solving",
+    text: "I start with the problem, not the tool, and break it into smaller, clearer questions.",
+    icon: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
   },
   {
-    title: "Continuous Learning",
-    text: "New technologies are an invitation, not a threat. I learn by reading, experimenting and building small things until an idea clicks, and I’m comfortable saying “I don’t know yet” along the way.",
+    title: "Continuous learning",
+    text: "I learn by reading, experimenting and building small things until an idea clicks.",
+    icon: '<path d="M4 6.5c2.5-1.5 5.5-1.5 8 0v12c-2.5-1.5-5.5-1.5-8 0Z"/><path d="M20 6.5c-2.5-1.5-5.5-1.5-8 0v12c2.5-1.5 5.5-1.5 8 0Z"/>',
   },
   {
     title: "Building",
-    text: "Ideas matter most once they’re real. I enjoy taking something from a rough sketch to working software, and caring about the details that make it reliable and genuinely useful.",
+    text: "I enjoy taking an idea from a rough sketch to working software that holds up.",
+    icon: '<path d="M12 3.5 20.5 8 12 12.5 3.5 8Z"/><path d="M3.5 12 12 16.5 20.5 12M3.5 16 12 20.5 20.5 16"/>',
   },
+];
+
+const facts = [
+  { label: "Role", value: site.role },
+  { label: "Focus", value: "Backend · Python, Django, APIs" },
+  { label: "Now", value: "Backend Developer, Inthera Consulting Group" },
+  { label: "Open to", value: "Full-time roles & freelance projects" },
 ];
 ---
 
-<Section id="about" labelledBy="about-title" tone="ink">
-  <div class="about grid-editorial">
-    <SectionHeader label="About" titleId="about-title">
-      <span class="about__title-line">Always learning.</span>{" "}
-      <span class="about__title-line">Always building.</span>
-    </SectionHeader>
+<Section id="about" labelledBy="about-title" surface="alt">
+  <SectionHead index="01" label="About" titleId="about-title">
+    Always learning. Always <span class="accent-word">building.</span>
+    <Fragment slot="intro">
+      I’m happiest between a messy problem and a working solution: understanding how something
+      works, why it breaks, and how it could be simpler.
+    </Fragment>
+  </SectionHead>
 
-    <div class="about__intro">
-      <p class="about__standfirst font-display text-standfirst" data-reveal>
-        I’m happiest somewhere between a messy problem and a working solution&nbsp;— understanding
-        how something works, why it breaks, and how it could be simpler.
-      </p>
-      <p class="about__body" data-reveal style="--delay: 90ms">
-        My work has taken me across the stack, from interfaces and APIs to cloud services,
-        automation and AI. I don’t pretend to know everything. I’d rather understand the problem
-        properly, learn what it asks of me, and build something that holds up.
-      </p>
-    </div>
+  <ol class="about__cards" role="list" data-stagger>
+    {principles.map((p, i) => (
+      <li class="about__card spot" data-spotlight>
+        <span class="about__top">
+          <svg
+            class="about__icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            set:html={p.icon}
+          />
+          <span class="about__num mono">0{i + 1}</span>
+        </span>
+        <h3 class="about__title">{p.title}</h3>
+        <p class="about__text">{p.text}</p>
+      </li>
+    ))}
+  </ol>
 
-    <ol class="about__pillars" role="list" aria-label="What drives my work" data-principles>
-      {pillars.map((pillar, i) => (
-        <AboutPillar index={i + 1} title={pillar.title}>
-          {pillar.text}
-        </AboutPillar>
-      ))}
-    </ol>
-  </div>
+  <dl class="about__facts" data-stagger style="--stagger-base: 200ms">
+    {facts.map((f) => (
+      <div class="about__fact">
+        <dt class="mono">{f.label}</dt>
+        <dd>{f.value}</dd>
+      </div>
+    ))}
+  </dl>
 </Section>
 
-<script>
-  /*
-   * One active principle at a time:
-   *  - with a mouse, the row under the pointer;
-   *  - otherwise (touch, keyboard scrolling, or no pointer over the list) the row
-   *    crossing the middle of the screen — so the index responds while reading.
-   */
-  const list = document.querySelector<HTMLElement>("[data-principles]");
-
-  if (list && "IntersectionObserver" in window) {
-    const rows = [...list.querySelectorAll<HTMLElement>("[data-principle]")];
-    let hovered: HTMLElement | null = null;
-    let reading: HTMLElement | null = null;
-
-    const render = () => {
-      const active = hovered ?? reading;
-      rows.forEach((row) => row.classList.toggle("is-active", row === active));
-    };
-
-    rows.forEach((row) => {
-      row.addEventListener("pointerenter", (event) => {
-        if (event.pointerType !== "mouse") return;
-        hovered = row;
-        render();
-      });
-      row.addEventListener("pointerleave", (event) => {
-        if (event.pointerType !== "mouse") return;
-        hovered = null;
-        render();
-      });
-    });
-
-    const readingLine = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) reading = entry.target as HTMLElement;
-          else if (reading === entry.target) reading = null;
-        }
-        render();
-      },
-      { rootMargin: "-46% 0px -46% 0px" },
-    );
-
-    rows.forEach((row) => readingLine.observe(row));
-  }
-</script>
-
 <style>
-  .about__title-line {
-    display: block;
-  }
-
-  .about__intro {
+  .about__cards {
     display: grid;
-    grid-template-columns: subgrid;
-    row-gap: 1.5rem;
-    margin-top: 2.5rem;
+    gap: 1rem;
+    margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
   }
 
-  .about__standfirst {
-    grid-column: content;
-    max-width: 30ch;
+  .about__card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1.5rem 1.75rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+    transition:
+      transform var(--dur-base) var(--ease-out-expo),
+      border-color var(--dur-base);
   }
 
-  .about__body {
-    grid-column: content;
-    max-width: 52ch;
+  .about__card:hover {
+    transform: translateY(-4px);
+    border-color: var(--color-line-strong);
+  }
+
+  .about__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .about__icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0.625rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-md);
     color: var(--color-fg-muted);
+    transition:
+      color var(--dur-base),
+      border-color var(--dur-base),
+      transform var(--dur-slow) var(--ease-spring);
   }
 
-  .about__pillars {
-    position: relative;
+  .about__card:hover .about__icon {
+    color: var(--color-accent);
+    border-color: rgb(211 148 98 / 0.5);
+    transform: rotate(-8deg) scale(1.06);
+  }
+
+  .about__num {
+    color: var(--color-fg-subtle);
+  }
+
+  .about__title {
+    margin-top: 2.5rem;
+    font-size: var(--text-subhead);
+    line-height: var(--text-subhead--line-height);
+    letter-spacing: var(--text-subhead--letter-spacing);
+    font-weight: 600;
+  }
+
+  .about__text {
+    margin-top: 0.5rem;
+    color: var(--color-fg-muted);
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+  }
+
+  .about__facts {
     display: grid;
-    grid-template-columns: subgrid;
-    margin-top: clamp(4.5rem, 2rem + 7vw, 8.5rem);
-    border-bottom: 1px solid var(--color-rule);
+    margin-top: 1rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
   }
 
-  @media (min-width: 64rem) {
-    .about__intro {
-      margin-top: 3.5rem;
-      row-gap: 2rem;
+  .about__fact {
+    padding: 1.125rem 1.5rem;
+  }
+
+  .about__fact + .about__fact {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .about__fact dt {
+    color: var(--color-fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.6875rem;
+  }
+
+  .about__fact dd {
+    margin-top: 0.375rem;
+    font-size: var(--text-small);
+    font-weight: 500;
+  }
+
+  @media (min-width: 48rem) {
+    .about__cards {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .about__standfirst {
-      grid-column: col-start 4 / span 7;
+    .about__facts {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
-    .about__body {
-      grid-column: col-start 4 / span 5;
+    .about__fact + .about__fact {
+      border-top: 0;
+      border-left: 1px solid var(--color-line);
     }
   }
 </style>

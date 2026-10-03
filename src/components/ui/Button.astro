@@ -1,32 +1,41 @@
 ---
+/**
+ * Link styled as a button.
+ *  - primary:   ivory pill; a copper fill sweeps in from the pointer side on
+ *               hover and the arrow swaps (ArrowSwap).
+ *  - secondary: outlined pill that fills faintly on hover.
+ *  - ghost:     text with an underline that draws in.
+ * `magnetic` lets it drift toward the pointer (scripts/interact.ts).
+ */
+import type { HTMLAttributes } from "astro/types";
 import ArrowSwap from "./ArrowSwap.astro";
 
-/**
- * Link-styled actions. Every CTA on the site is navigation, so this always renders <a>.
- * Colours come from the section tone's action/accent tokens.
- *
- *  - primary: solid action fill. On hover/focus a second fill wipes in from the
- *             left (and leaves to the right), the label eases back a touch and
- *             the arrow is swapped.
- *  - text:    resting hairline underline; an accent line draws over it.
- *  - quiet:   no resting underline; the accent line draws on hover/focus (nav).
- *
- * Hover styles only apply on devices that hover; keyboard focus gets the same
- * treatment, and touch gets it while pressed.
- */
-interface Props {
+interface Props extends HTMLAttributes<"a"> {
   href: string;
-  variant?: "primary" | "text" | "quiet";
-  arrow?: "right" | "up-right" | "down";
-  class?: string;
-  [key: string]: unknown;
+  variant?: "primary" | "secondary" | "ghost";
+  arrow?: "right" | "up-right" | "down" | false;
+  magnetic?: boolean;
+  size?: "md" | "sm";
 }
 
-const { href, variant = "primary", arrow, class: className, ...rest } = Astro.props;
+const {
+  href,
+  variant = "primary",
+  arrow = "right",
+  magnetic = false,
+  size = "md",
+  class: className,
+  ...rest
+} = Astro.props;
 ---
 
-<a href={href} class:list={["btn", `btn--${variant}`, "swap-trigger", className]} {...rest}>
-  {variant === "primary" && <span class="btn__fill" aria-hidden="true" />}
+<a
+  href={href}
+  class:list={["btn", `btn--${variant}`, `btn--${size}`, "swap-trigger", className]}
+  data-magnetic={magnetic ? "5" : undefined}
+  {...rest}
+>
+  <span class="btn__fill" aria-hidden="true"></span>
   <span class="btn__label">
     <slot />
   </span>
@@ -35,118 +44,105 @@ const { href, variant = "primary", arrow, class: className, ...rest } = Astro.pr
 
 <style>
   .btn {
+    --mag-x: 0px;
+    --mag-y: 0px;
     position: relative;
+    isolation: isolate;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.625rem;
-    font-family: var(--font-sans);
-    font-weight: 500;
+    min-height: 3rem;
+    padding: 0 1.375rem;
+    overflow: hidden;
+    border-radius: var(--radius-full);
     font-size: 0.9375rem;
-    line-height: 1;
-    letter-spacing: 0.005em;
-    white-space: nowrap;
+    font-weight: 600;
+    letter-spacing: -0.005em;
     text-decoration: none;
+    white-space: nowrap;
+    transform: translate3d(var(--mag-x), var(--mag-y), 0);
+    transition:
+      transform var(--dur-base) var(--ease-out-expo),
+      color var(--dur-fast) var(--ease-out-expo),
+      border-color var(--dur-fast) var(--ease-out-expo),
+      background-color var(--dur-fast) var(--ease-out-expo);
     -webkit-tap-highlight-color: transparent;
   }
 
-  .btn__label {
-    position: relative;
-    transition:
-      transform var(--dur-base) var(--ease-out-expo),
-      color var(--dur-fast) var(--ease-editorial);
-  }
-
-  /* Primary ---------------------------------------------------------- */
-  .btn--primary {
-    isolation: isolate;
-    overflow: hidden;
-    min-height: 3.375rem;
-    padding-inline: 1.625rem 1.375rem;
-    background-color: var(--color-action);
-    color: var(--color-on-action);
-    border-radius: var(--radius-sm);
-    transition: transform 160ms var(--ease-editorial);
+  .btn--sm {
+    min-height: 2.5rem;
+    padding: 0 1.125rem;
+    font-size: 0.875rem;
   }
 
   .btn__fill {
     position: absolute;
     inset: 0;
     z-index: -1;
-    background-color: var(--color-action-hover);
+    border-radius: inherit;
     transform: scaleX(0);
-    transform-origin: right center;
-    transition: transform 620ms var(--ease-out-expo);
-  }
-
-  @media (hover: hover) {
-    .btn--primary:hover .btn__fill {
-      transform: scaleX(1);
-      transform-origin: left center;
-    }
-
-    .btn--primary:hover .btn__label {
-      transform: translateX(-0.125rem);
-    }
-  }
-
-  .btn--primary:focus-visible .btn__fill,
-  .btn--primary:active .btn__fill {
-    transform: scaleX(1);
     transform-origin: left center;
-  }
-
-  .btn--primary:active {
-    transform: translateY(1px);
-  }
-
-  /* Text + quiet ------------------------------------------------------ */
-  .btn--text,
-  .btn--quiet {
-    min-height: 2.75rem;
-    color: var(--color-fg);
-  }
-
-  .btn--text .btn__label,
-  .btn--quiet .btn__label {
-    padding-block: 0.3125rem;
-  }
-
-  /* Resting hairline (text only) and the accent line that draws over it. */
-  .btn--text .btn__label::before,
-  .btn--text .btn__label::after,
-  .btn--quiet .btn__label::after {
-    content: "";
-    position: absolute;
-    inset: auto 0 0 0;
-    height: 1px;
-  }
-
-  .btn--text .btn__label::before {
-    background-color: currentColor;
-    opacity: 0.32;
-  }
-
-  .btn--text .btn__label::after,
-  .btn--quiet .btn__label::after {
-    background-color: var(--color-accent);
-    transform: scaleX(0);
-    transform-origin: right center;
     transition: transform var(--dur-base) var(--ease-out-expo);
   }
 
-  @media (hover: hover) {
-    .btn--text:hover .btn__label::after,
-    .btn--quiet:hover .btn__label::after {
-      transform: scaleX(1);
-      transform-origin: left center;
-    }
+  .btn:hover .btn__fill,
+  .btn:focus-visible .btn__fill {
+    transform: scaleX(1);
   }
 
-  .btn--text:focus-visible .btn__label::after,
-  .btn--quiet:focus-visible .btn__label::after,
-  .btn--text:active .btn__label::after,
-  .btn--quiet:active .btn__label::after {
-    transform: scaleX(1);
-    transform-origin: left center;
+  .btn:active {
+    transform: translate3d(var(--mag-x), var(--mag-y), 0) scale(0.98);
+  }
+
+  /* Primary */
+  .btn--primary {
+    background-color: var(--color-action);
+    color: var(--color-on-action);
+  }
+
+  .btn--primary .btn__fill {
+    background-color: var(--color-accent);
+  }
+
+  /* Secondary */
+  .btn--secondary {
+    border: 1px solid var(--color-line-strong);
+    color: var(--color-fg);
+  }
+
+  .btn--secondary .btn__fill {
+    background-color: rgb(243 239 231 / 0.07);
+  }
+
+  .btn--secondary:hover,
+  .btn--secondary:focus-visible {
+    border-color: rgb(243 239 231 / 0.4);
+  }
+
+  /* Ghost */
+  .btn--ghost {
+    min-height: 2.75rem;
+    padding: 0;
+    border-radius: 0;
+    color: var(--color-fg);
+  }
+
+  .btn--ghost .btn__fill {
+    display: none;
+  }
+
+  .btn--ghost .btn__label {
+    background: linear-gradient(currentColor, currentColor) left calc(100% - 1px) / 0 1px no-repeat;
+    transition: background-size var(--dur-base) var(--ease-out-expo);
+  }
+
+  .btn--ghost:hover .btn__label,
+  .btn--ghost:focus-visible .btn__label {
+    background-size: 100% 1px;
+  }
+
+  .btn__label {
+    position: relative;
   }
 </style>

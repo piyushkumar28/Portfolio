@@ -1,111 +1,88 @@
 /**
- * Explorable diagrams (the Experience stack and the Skills map).
+ * Explorable diagrams (the Experience system map and the Skills ecosystem).
  *
- * One node is active at a time. Its linked nodes stay bright while everything
- * else steps back, the edges joining them light up, and a caption explains it.
+ * One node is active at a time. The nodes it stands for and the nodes it links
+ * to stay bright while everything else steps back, and the wires joining them
+ * light up. Each diagram renders its own readout through `onChange`.
  *
  * Markup contract, inside a root element:
- *  - button[data-node="id"]          data-group, data-links="id id …",
- *                                    data-title, data-text (caption text;
- *                                    falls back to the aria-describedby text)
- *  - [data-group-block="group"]      gets .is-involved when a node in it is
- *                                    active or linked
- *  - [data-edge="a b …"]             endpoints are node ids or group ids; lit
- *                                    when it joins the active node/group to a
- *                                    linked one
- *  - [data-caption="group"]          shows the active node's text when it
- *                                    belongs to that group (data-default
- *                                    holds the resting text); an optional
- *                                    [data-caption-title="group"] shows its title
- *  - [data-roving]                   arrow keys / Home / End move between its
- *                                    nodes, which share one tab stop
+ *  - button[data-node="id"]   data-links="id …"   nodes that stay bright with it
+ *                             data-members="id …" optional: the nodes this one
+ *                             stands for (a group, a container, a key). Defaults
+ *                             to the node itself.
+ *  - [data-edge="a b"]        a wire (or its label); lit when one end is active
+ *                             and the other is active or linked
+ *  - [data-roving]            arrow keys / Home / End move between its nodes,
+ *                             which share one tab stop
  *
  * Active = the hovered node (mouse) ?? the focused node ?? the pinned node
  * (click / tap). Escape or a click elsewhere clears the pin.
  */
 
+export interface ExploreState {
+  /** The node driving the state, or null at rest. */
+  id: string | null;
+  /** The nodes it stands for (just itself unless it has data-members). */
+  active: Set<string>;
+  /** The nodes linked to those. */
+  linked: Set<string>;
+  pinned: string | null;
+}
+
 interface NodeInfo {
   el: HTMLButtonElement;
-  group: string;
-  title: string;
-  text: string;
+  members: Set<string>;
   links: Set<string>;
 }
 
-export function explore(root: HTMLElement) {
+const ids = (value: string | undefined) => (value ?? "").split(" ").filter(Boolean);
+
+export function explore(
+  root: HTMLElement,
+  { onChange }: { onChange?: (state: ExploreState) => void } = {},
+) {
   const info = new Map<string, NodeInfo>();
   for (const el of root.querySelectorAll<HTMLButtonElement>("[data-node]")) {
     const id = el.dataset.node!;
-    const describedBy = el.getAttribute("aria-describedby");
+    const members = ids(el.dataset.members);
     info.set(id, {
       el,
-      group: el.dataset.group ?? "",
-      title: el.dataset.title ?? el.textContent?.trim() ?? "",
-      text:
-        el.dataset.text ??
-        ((describedBy && document.getElementById(describedBy)?.textContent?.trim()) || ""),
-      links: new Set((el.dataset.links ?? "").split(" ").filter(Boolean)),
+      members: new Set(members.length ? members : [id]),
+      links: new Set(ids(el.dataset.links)),
     });
   }
+  const edges = [...root.querySelectorAll<Element>("[data-edge]")];
 
   let hovered: string | null = null;
   let focused: string | null = null;
   let pinned: string | null = null;
-  let shown: string | null | undefined;
 
   const render = () => {
     const id = hovered ?? focused ?? pinned;
-    const active = id ? info.get(id) : undefined;
-    const linked = active?.links ?? new Set<string>();
+    const node = id ? info.get(id) : undefined;
+    const active = new Set(node?.members ?? []);
+    const linked = new Set([...(node?.links ?? [])].filter((key) => !active.has(key)));
 
-    const activeKeys = new Set<string>(active ? [id!, active.group].filter(Boolean) : []);
-    const linkedKeys = new Set<string>();
-    for (const key of linked) {
-      linkedKeys.add(key);
-      const group = info.get(key)?.group;
-      if (group) linkedKeys.add(group);
+    root.classList.toggle("is-exploring", Boolean(node));
+
+    for (const [key, { el }] of info) {
+      el.classList.toggle("is-active", key === id || active.has(key));
+      el.classList.toggle("is-linked", linked.has(key));
+      el.setAttribute("aria-pressed", String(key === pinned));
     }
 
-    root.classList.toggle("is-exploring", Boolean(active));
-
-    for (const [key, node] of info) {
-      node.el.classList.toggle("is-active", key === id);
-      node.el.classList.toggle("is-linked", linked.has(key));
-      node.el.setAttribute("aria-pressed", String(key === pinned));
+    for (const edge of edges) {
+      const ends = ids(edge.getAttribute("data-edge") ?? "");
+      const lit =
+        ends.some((end) => active.has(end)) &&
+        ends.every((end) => active.has(end) || linked.has(end));
+      edge.classList.toggle("is-lit", lit);
     }
 
-    for (const block of root.querySelectorAll<HTMLElement>("[data-group-block]")) {
-      const group = block.dataset.groupBlock!;
-      block.classList.toggle("is-involved", activeKeys.has(group) || linkedKeys.has(group));
-    }
-
-    for (const edge of root.querySelectorAll<Element>("[data-edge]")) {
-      const ends = (edge.getAttribute("data-edge") ?? "").split(" ");
-      const touchesActive = ends.some((end) => activeKeys.has(end));
-      const reachesLinked = ends.some((end) => !activeKeys.has(end) && linkedKeys.has(end));
-      edge.classList.toggle("is-lit", Boolean(active) && touchesActive && reachesLinked);
-    }
-
-    // Captions only change when the active node changes, so the swap can animate.
-    if (shown === id) return;
-    shown = id;
-    for (const caption of root.querySelectorAll<HTMLElement>("[data-caption]")) {
-      const group = caption.dataset.caption!;
-      const mine = active && active.group === group ? active : undefined;
-      const text = mine ? mine.text : (caption.dataset.default ?? "");
-      if (caption.textContent !== text) {
-        caption.textContent = text;
-        caption.classList.remove("is-swapping");
-        void caption.offsetWidth;
-        caption.classList.add("is-swapping");
-      }
-      const title = root.querySelector<HTMLElement>(`[data-caption-title="${group}"]`);
-      if (title) title.textContent = mine ? mine.title : (title.dataset.default ?? "");
-    }
+    onChange?.({ id: node ? id : null, active, linked, pinned });
   };
 
-  for (const [id, node] of info) {
-    const { el } = node;
+  for (const [id, { el }] of info) {
     el.addEventListener("pointerenter", (event) => {
       if (event.pointerType !== "mouse") return;
       hovered = id;
@@ -135,11 +112,16 @@ export function explore(root: HTMLElement) {
     });
   }
 
-  root.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape" || !(pinned || focused)) return;
+  /** Drop the pin (and, by default, focus inside the diagram). */
+  const clear = (blur = true) => {
     pinned = null;
-    (document.activeElement as HTMLElement | null)?.blur();
+    const current = document.activeElement as HTMLElement | null;
+    if (blur && current && root.contains(current)) current.blur();
     render();
+  };
+
+  root.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && (pinned || focused)) clear();
   });
 
   document.addEventListener("click", (event) => {
@@ -156,7 +138,6 @@ export function explore(root: HTMLElement) {
     list.addEventListener("keydown", (event) => {
       const current = items.indexOf(document.activeElement as HTMLButtonElement);
       if (current < 0) return;
-      const last = items.length - 1;
       const next =
         event.key === "ArrowRight" || event.key === "ArrowDown"
           ? (current + 1) % items.length
@@ -165,7 +146,7 @@ export function explore(root: HTMLElement) {
             : event.key === "Home"
               ? 0
               : event.key === "End"
-                ? last
+                ? items.length - 1
                 : -1;
       if (next < 0) return;
       event.preventDefault();
@@ -175,5 +156,21 @@ export function explore(root: HTMLElement) {
     });
   }
 
-  return { refresh: render };
+  /** Activate a node programmatically (e.g. from an inspector link). */
+  const select = (id: string) => {
+    const node = info.get(id);
+    if (!node) return;
+    pinned = id;
+    // Keep the roving tab stop on the selected node.
+    const list = node.el.closest<HTMLElement>("[data-roving]");
+    list
+      ?.querySelectorAll<HTMLButtonElement>("[data-node]")
+      .forEach((item) => (item.tabIndex = -1));
+    node.el.tabIndex = 0;
+    node.el.focus({ preventScroll: true });
+    render();
+  };
+
+  render();
+  return { refresh: render, clear, select };
 }

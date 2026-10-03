@@ -1,0 +1,905 @@
+---
+/**
+ * The current role as a system map: the components of the work, the Docker
+ * container around the backend and the wires between them, drawn as a
+ * technical figure on a drafting grid.
+ *
+ * - Hover, focus or tap a component: it and its neighbours stay bright, the
+ *   wires between them turn copper and the readout explains it (explore.ts).
+ * - "Trace a request" sends a packet along the wires, step by step (it also
+ *   plays once when the figure first comes into view). With reduced motion
+ *   the steps advance without the packet moving.
+ *
+ * Layout is CSS grid (placement by component id, below); the wires are
+ * measured from it and drawn in SVG (wires.ts), so they follow every
+ * breakpoint. Without JS the components and labels still read in order.
+ */
+import type { CollectionEntry } from "astro:content";
+import Icon from "@/components/ui/Icon.astro";
+
+type System = CollectionEntry<"experience">["data"]["system"];
+
+interface Props {
+  system: System;
+}
+
+const { system } = Astro.props;
+const { nodes, container, wires, trace } = system;
+
+const names = new Map([...nodes, container].map((n) => [n.id, n.name]));
+const neighbours = (id: string) => {
+  const found = new Set<string>();
+  for (const wire of wires) {
+    if (wire.from === id) found.add(wire.to);
+    if (wire.to === id) found.add(wire.from);
+  }
+  if (container.wraps.includes(id)) found.add(container.id);
+  return [...found];
+};
+const list = (ids: string[]) =>
+  new Intl.ListFormat("en", { type: "conjunction" }).format(ids.map((id) => names.get(id)!));
+const defaultKey = "System";
+const defaultText = "A Django backend in Docker, between a React interface and PostgreSQL.";
+---
+
+<figure
+  class="sys"
+  data-system
+  data-wires={JSON.stringify(wires)}
+  data-trace={JSON.stringify(trace)}
+  aria-labelledby="sys-caption"
+>
+  <div class="sys__head">
+    <p id="sys-caption" class="sys__caption mono">
+      <span class="sys__fig">Fig. 01</span>
+      <span>System map · current role</span>
+    </p>
+    <button type="button" class="sys__trace mono" data-trace-button aria-pressed="false">
+      <span class="sys__trace-icon" aria-hidden="true"></span>
+      <span data-trace-label>Trace a request</span>
+    </button>
+  </div>
+
+  <div class="sys__plot" data-plot data-inview role="group" aria-label="Components" data-roving>
+    <svg class="sys__wires" data-wires-svg aria-hidden="true"></svg>
+
+    <span class="sys__zone sys__zone--clients mono" aria-hidden="true">
+      Clients
+    </span>
+    <span class="sys__zone sys__zone--data mono" aria-hidden="true">
+      Data
+    </span>
+    <span class="sys__box" data-edge={container.id} aria-hidden="true"></span>
+
+    {nodes.map((node) => (
+      <button
+        type="button"
+        class:list={["sys__node", { "sys__node--external": node.external }]}
+        data-slot={node.id}
+        data-node={node.id}
+        data-links={neighbours(node.id).join(" ")}
+        data-kind={node.kind}
+        data-text={node.text}
+        aria-describedby={`sys-${node.id}`}
+        aria-pressed="false"
+      >
+        <span class="sys__icon">
+          <Icon id={node.id} />
+        </span>
+        <span class="sys__text">
+          <span class="sys__kind mono">{node.kind}</span>
+          <span class="sys__name">{node.name}</span>
+        </span>
+      </button>
+    ))}
+
+    <button
+      type="button"
+      class="sys__tab"
+      data-slot={container.id}
+      data-node={container.id}
+      data-links={container.wraps.join(" ")}
+      data-kind={container.kind}
+      data-text={container.text}
+      aria-describedby={`sys-${container.id}`}
+      aria-pressed="false"
+    >
+      <Icon id="docker" class="sys__tab-icon" />
+      <span class="sys__kind mono">{container.kind}</span>
+      <span class="sys__tab-name">{container.name}</span>
+    </button>
+
+    {wires.map((wire) => (
+      <span class="sys__label mono" data-edge={`${wire.from} ${wire.to}`} aria-hidden="true">
+        {wire.label}
+      </span>
+    ))}
+  </div>
+
+  <div class="sys__readout" aria-hidden="true">
+    <p class="sys__readout-key mono" data-readout-key data-default={defaultKey}>
+      {defaultKey}
+    </p>
+    <p class="sys__readout-text" data-readout-text data-default={defaultText}>
+      {defaultText}
+    </p>
+  </div>
+
+  {nodes.map((node) => (
+    <span id={`sys-${node.id}`} class="sr-only">
+      {node.kind}. {node.text} Connects to {list(neighbours(node.id))}.
+    </span>
+  ))}
+  <span id={`sys-${container.id}`} class="sr-only">
+    {container.kind}. {container.text} It wraps {list(container.wraps)}.
+  </span>
+  <p class="sr-only" aria-live="polite" data-trace-status></p>
+</figure>
+
+<script>
+  import { explore, type ExploreState } from "@/scripts/explore";
+  import {
+    arrowPath,
+    frame,
+    orthoRoute,
+    placeLabel,
+    polyline,
+    roundedPath,
+    segmentRects,
+    svgEl,
+    type Point,
+    type Rect,
+  } from "@/scripts/wires";
+
+  interface Wire {
+    from: string;
+    to: string;
+    label: string;
+    flow: boolean;
+  }
+  interface Step {
+    path: string[];
+    step: string;
+    text: string;
+  }
+
+  const wide = matchMedia("(min-width: 80rem)");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  document.querySelectorAll<HTMLElement>("[data-system]").forEach((figure) => {
+    // Lenses outside the figure (in the same [data-system-scope]) drive it too.
+    const root = figure.closest<HTMLElement>("[data-system-scope]") ?? figure;
+    const plot = root.querySelector<HTMLElement>("[data-plot]")!;
+    const svg = root.querySelector<SVGSVGElement>("[data-wires-svg]")!;
+    const wires: Wire[] = JSON.parse(figure.dataset.wires ?? "[]");
+    const trace: Step[] = JSON.parse(figure.dataset.trace ?? "[]");
+    const key = root.querySelector<HTMLElement>("[data-readout-key]")!;
+    const text = root.querySelector<HTMLElement>("[data-readout-text]")!;
+    const status = root.querySelector<HTMLElement>("[data-trace-status]")!;
+    const button = root.querySelector<HTMLButtonElement>("[data-trace-button]")!;
+    const buttonLabel = root.querySelector<HTMLElement>("[data-trace-label]")!;
+    const node = (id: string) => root.querySelector<HTMLElement>(`[data-node="${id}"]`)!;
+
+    // Readout ------------------------------------------------------------
+    const readout = (k: string, t: string) => {
+      if (key.textContent === k && text.textContent === t) return;
+      key.textContent = k;
+      text.textContent = t;
+      text.classList.remove("is-swapping");
+      void text.offsetWidth;
+      text.classList.add("is-swapping");
+    };
+    const rest = () => readout(key.dataset.default ?? "", text.dataset.default ?? "");
+
+    // Wires: created once, geometry updated on every layout change -------
+    const shapes = wires.map((wire) => {
+      const edge = `${wire.from} ${wire.to}`;
+      const g = svgEl("g", { class: "sys__wire", "data-edge": edge });
+      const line = svgEl("path", { class: "sys__line", pathLength: 1 });
+      const arrow = svgEl("path", { class: "sys__arrow" });
+      const ports = [0, 1].map(() => svgEl("rect", { class: "sys__port", width: 5, height: 5 }));
+      const joint = svgEl("rect", { class: "sys__joint", width: 5, height: 5 });
+      g.append(line, ...ports, arrow, joint);
+      svg.append(g);
+      const label = root.querySelector<HTMLElement>(`.sys__label[data-edge="${edge}"]`)!;
+      return { wire, g, line, arrow, ports, joint, label, points: [] as Point[] };
+    });
+    const packet = svgEl("rect", { class: "sys__packet", width: 7, height: 7 });
+    svg.append(packet);
+
+    const draw = () => {
+      const { sx, sy, box, width, height } = frame(plot, svg);
+      for (const shape of shapes) {
+        const { wire, line, arrow, ports, joint, label } = shape;
+        // Fan-ins merge near their source on narrow layouts, mid-gap on wide.
+        const route = orthoRoute(
+          box(node(wire.from)),
+          box(node(wire.to)),
+          wide.matches ? 0.5 : 0.3,
+        );
+        const points = route.map(([x, y]) => [sx(x), sy(y)] as Point);
+        shape.points = points;
+        line.setAttribute("d", roundedPath(points));
+
+        const ends = wire.flow ? [points[0]] : [points[0], points[points.length - 1]];
+        ports.forEach((port, i) => {
+          port.toggleAttribute("hidden", !ends[i]);
+          if (!ends[i]) return;
+          port.setAttribute("x", String(ends[i][0] - 2.5));
+          port.setAttribute("y", String(ends[i][1] - 2.5));
+        });
+        arrow.toggleAttribute("hidden", !wire.flow);
+        if (wire.flow) arrow.setAttribute("d", arrowPath(points));
+
+        // A Z-route whose target another wire also reaches marks the merge.
+        const merges = points.length === 4 && wires.some((w) => w !== wire && w.to === wire.to);
+        joint.toggleAttribute("hidden", !merges);
+        if (merges) {
+          joint.setAttribute("x", String(points[2][0] - 2.5));
+          joint.setAttribute("y", String(points[2][1] - 2.5));
+        }
+      }
+
+      // Labels go where they collide with nothing: components, the container
+      // outline, other wires or labels already placed.
+      const solid = [...plot.querySelectorAll(".sys__node, .sys__tab, .sys__zone")].map(box);
+      const outline = box(plot.querySelector(".sys__box")!);
+      const edges: Rect[] = [
+        { ...outline, b: outline.t },
+        { ...outline, t: outline.b },
+        { ...outline, r: outline.l },
+        { ...outline, l: outline.r },
+      ];
+      const placed: Rect[] = [];
+      for (const { label, points } of shapes) {
+        const others = shapes
+          .filter((s) => s.label !== label)
+          .flatMap((s) => segmentRects(s.points));
+        const spot = placeLabel(
+          points,
+          { w: label.offsetWidth, h: label.offsetHeight },
+          [...solid, ...edges, ...others, ...placed],
+          { l: 0, t: 0, r: width, b: height },
+        );
+        label.style.visibility = spot ? "" : "hidden";
+        if (!spot) continue;
+        placed.push(spot);
+        label.style.transform = `translate(${Math.round(spot.l)}px, ${Math.round(spot.t)}px)`;
+      }
+    };
+
+    // Exploring ------------------------------------------------------------
+    let tracing: { cancelled: boolean } | null = null;
+
+    const onChange = ({ id }: ExploreState) => {
+      if (tracing) return;
+      if (!id) return rest();
+      const el = node(id);
+      const name =
+        el.dataset.title ?? el.querySelector(".sys__name, .sys__tab-name")?.textContent ?? "";
+      readout(`${el.dataset.kind} · ${name}`, el.dataset.text ?? "");
+    };
+    const explorer = explore(root, { onChange });
+
+    // Tracing --------------------------------------------------------------
+    const stopTrace = () => {
+      if (!tracing) return;
+      tracing.cancelled = true;
+      tracing = null;
+      figure.classList.remove("is-tracing");
+      root.querySelectorAll(".is-traced").forEach((el) => el.classList.remove("is-traced"));
+      button.setAttribute("aria-pressed", "false");
+      buttonLabel.textContent = "Trace a request";
+      explorer.refresh();
+    };
+
+    const segment = (from: string, to: string): Point[] => {
+      const shape = shapes.find((s) => s.wire.from === from && s.wire.to === to);
+      if (shape) return shape.points;
+      const back = shapes.find((s) => s.wire.from === to && s.wire.to === from);
+      return back ? [...back.points].reverse() : [];
+    };
+
+    const place = ([x, y]: Point) => {
+      packet.setAttribute("x", String(x - 3.5));
+      packet.setAttribute("y", String(y - 3.5));
+    };
+
+    const travel = (points: Point[], run: { cancelled: boolean }) =>
+      new Promise<void>((resolve) => {
+        const { total, at } = polyline(points);
+        const duration = Math.max(650, total * 3.2);
+        const start = performance.now();
+        const tick = (now: number) => {
+          if (run.cancelled) return resolve();
+          const t = Math.min(1, (now - start) / duration);
+          const eased = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+          place(at(total * eased));
+          if (t < 1) requestAnimationFrame(tick);
+          else resolve();
+        };
+        requestAnimationFrame(tick);
+      });
+
+    const startTrace = async () => {
+      stopTrace();
+      explorer.clear(false);
+      const run = { cancelled: false };
+      tracing = run;
+      figure.classList.add("is-tracing");
+      button.setAttribute("aria-pressed", "true");
+      buttonLabel.textContent = "Stop trace";
+
+      for (const [i, step] of trace.entries()) {
+        if (run.cancelled) return;
+        root.querySelectorAll(".is-traced").forEach((el) => el.classList.remove("is-traced"));
+        const pairs = step.path.slice(1).map((to, j) => [step.path[j], to] as const);
+        for (const id of step.path) node(id).classList.add("is-traced");
+        for (const [a, b] of pairs)
+          root
+            .querySelectorAll(`[data-edge="${a} ${b}"], [data-edge="${b} ${a}"]`)
+            .forEach((el) => el.classList.add("is-traced"));
+        const label = `${String(i + 1).padStart(2, "0")}/${String(trace.length).padStart(2, "0")} · ${step.step}`;
+        readout(label, step.text);
+        status.textContent = `Step ${i + 1} of ${trace.length}, ${step.step}: ${step.text}`;
+
+        const points = pairs.flatMap(([a, b], j) => {
+          const seg = segment(a, b);
+          return j ? seg.slice(1) : seg;
+        });
+        if (reduce.matches || points.length < 2) {
+          if (points.length) place(points[points.length - 1]);
+          await wait(1400);
+        } else {
+          place(points[0]);
+          await travel(points, run);
+          await wait(650);
+        }
+      }
+      if (run.cancelled) return;
+      await wait(500);
+      if (run.cancelled) return;
+      stopTrace();
+      rest();
+      status.textContent = "Trace finished.";
+    };
+
+    button.addEventListener("click", () => (tracing ? (stopTrace(), rest()) : startTrace()));
+    root.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && tracing) {
+        stopTrace();
+        rest();
+      }
+    });
+    // Any direct interaction with the map takes over from a running trace.
+    plot.addEventListener("pointerover", (event) => {
+      if (
+        (event as PointerEvent).pointerType === "mouse" &&
+        (event.target as Element).closest("[data-node]")
+      )
+        stopTrace();
+    });
+    plot.addEventListener("focusin", stopTrace);
+    plot.addEventListener("pointerdown", stopTrace);
+
+    // Play once when the figure first comes properly into view.
+    let touched = false;
+    plot.addEventListener("pointerenter", () => (touched = true), { once: true });
+    plot.addEventListener("focusin", () => (touched = true), { once: true });
+    if ("IntersectionObserver" in window) {
+      const seen = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((e) => e.isIntersecting)) return;
+          seen.disconnect();
+          setTimeout(() => !touched && !reduce.matches && startTrace(), 1600);
+        },
+        { threshold: 0.6 },
+      );
+      seen.observe(plot);
+    }
+
+    new ResizeObserver(draw).observe(plot);
+    wide.addEventListener("change", draw);
+    document.fonts?.ready.then(draw);
+  });
+</script>
+
+<style is:global>
+  /* Global but namespaced under .sys: the wires are created by script.
+     Exploring state lives on the shared scope (.is-exploring), tracing on
+     the figure (.sys.is-tracing). */
+  .sys {
+    --line: color-mix(in srgb, var(--color-fg) 34%, transparent);
+    --line-faint: color-mix(in srgb, var(--color-fg) 10%, transparent);
+    --t: var(--dur-fast) var(--ease-out-expo);
+    overflow: hidden;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-ink-850);
+  }
+
+  :root:not(.js) :is(.sys__label, .sys__trace) {
+    display: none;
+  }
+
+  /* Head: caption and the trace action ------------------------------------ */
+  .sys__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    padding: 0.375rem 0.625rem 0.375rem 1.125rem;
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .sys__caption {
+    display: flex;
+    gap: 0.875rem;
+    color: var(--color-fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.6875rem;
+  }
+
+  .sys__fig {
+    color: var(--color-fg-muted);
+  }
+
+  .sys__trace {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 2.5rem;
+    padding: 0 0.875rem;
+    border: 1px solid rgb(211 148 98 / 0.35);
+    border-radius: var(--radius-full);
+    background-color: rgb(211 148 98 / 0.06);
+    color: var(--color-accent);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      background-color var(--t),
+      color var(--t);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sys__trace:hover,
+  .sys__trace:focus-visible,
+  .sys__trace[aria-pressed="true"] {
+    background-color: var(--color-accent);
+    color: var(--color-ink-900);
+  }
+
+  .sys__trace-icon {
+    width: 0;
+    height: 0;
+    border-block: 4.5px solid transparent;
+    border-left: 7px solid currentColor;
+  }
+
+  .sys__trace[aria-pressed="true"] .sys__trace-icon {
+    width: 7px;
+    height: 7px;
+    border: 0;
+    background-color: currentColor;
+  }
+
+  /* Plot ------------------------------------------------------------------- */
+  .sys__plot {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* zone · clients · (wires merge) · rest · django · (box bottom) · zone · data */
+    grid-template-rows: auto auto 1.5rem auto auto auto auto auto;
+    grid-template-areas:
+      "zone-clients ."
+      "react systems"
+      ". ."
+      "rest ."
+      "django python"
+      ". tab"
+      "zone-data ."
+      "postgres .";
+    column-gap: 2.25rem;
+    row-gap: 1.5rem;
+    padding: 2rem 1.125rem 2.5rem;
+    background-image: radial-gradient(rgb(243 239 231 / 0.09) 1px, transparent 1.2px);
+    background-size: 22px 22px;
+  }
+
+  .sys__wires {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .sys__zone {
+    grid-area: zone-clients;
+    align-self: end;
+    color: var(--color-fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.625rem;
+  }
+
+  .sys__zone--data {
+    grid-area: zone-data;
+  }
+
+  [data-slot="react"] {
+    grid-area: react;
+  }
+  [data-slot="systems"] {
+    grid-area: systems;
+  }
+  [data-slot="rest"] {
+    grid-area: rest;
+  }
+  [data-slot="django"] {
+    grid-area: django;
+  }
+  [data-slot="python"] {
+    grid-area: python;
+  }
+  [data-slot="postgres"] {
+    grid-area: postgres;
+  }
+
+  /* The Docker container: a dashed boundary around the backend. */
+  .sys__box {
+    grid-column: 1 / -1;
+    grid-row: 4 / 7;
+    margin: -1rem -0.5rem -0.25rem;
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-md);
+    background-color: rgb(36 150 237 / 0.025);
+    pointer-events: none;
+    transition: border-color var(--t);
+  }
+
+  .sys__tab {
+    grid-area: tab;
+    justify-self: end;
+    align-self: end;
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.25rem;
+    margin: 0 0.25rem -1.375rem 0;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-full);
+    background-color: var(--color-ink-800);
+    color: var(--color-fg);
+    cursor: pointer;
+    transition:
+      border-color var(--t),
+      color var(--t);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sys__tab-icon {
+    width: 1rem;
+    height: 1rem;
+    color: #2496ed;
+  }
+
+  .sys__tab-name {
+    font-weight: 600;
+    font-size: 0.8125rem;
+  }
+
+  /* Components ------------------------------------------------------------ */
+  .sys__node {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 14rem;
+    justify-self: start;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-md);
+    background-color: var(--color-ink-800);
+    color: var(--color-fg);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color var(--t),
+      color var(--t),
+      transform var(--dur-base) var(--ease-out-expo),
+      box-shadow var(--dur-base) var(--ease-out-expo);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sys__node:hover {
+    transform: translateY(-2px);
+  }
+
+  .sys__node--external {
+    border-style: dashed;
+    background-color: transparent;
+  }
+
+  .sys__icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-sm);
+    background-color: rgb(243 239 231 / 0.06);
+    color: var(--color-fg);
+    transition:
+      background-color var(--t),
+      color var(--t);
+  }
+
+  .sys__icon .icon {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .sys__text {
+    display: grid;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .sys__kind {
+    color: var(--color-fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.5625rem;
+    line-height: 1;
+    transition: color var(--t);
+  }
+
+  .sys__name {
+    font-size: clamp(0.9375rem, 0.85rem + 0.3vw, 1.0625rem);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    transition: color var(--t);
+  }
+
+  .sys__node--external .sys__name {
+    color: var(--color-fg-muted);
+  }
+
+  /* Wire labels ------------------------------------------------------------ */
+  .sys__label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    padding: 0.0625rem 0.375rem;
+    border-radius: var(--radius-xs);
+    background-color: var(--color-ink-850);
+    color: var(--color-fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.5625rem;
+    line-height: 1.5;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: color var(--t);
+  }
+
+  /* Wires (SVG) ------------------------------------------------------------ */
+  .sys__line,
+  .sys__arrow {
+    fill: none;
+    stroke: var(--line);
+    stroke-width: 1;
+    transition: stroke var(--t);
+  }
+
+  .sys__line {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+
+  .sys__port,
+  .sys__joint {
+    fill: var(--color-ink-850);
+    stroke: var(--line);
+    stroke-width: 1;
+    transition:
+      fill var(--t),
+      stroke var(--t);
+  }
+
+  .sys__joint {
+    fill: var(--line);
+  }
+
+  .sys__packet {
+    fill: var(--color-signature);
+    opacity: 0;
+    filter: drop-shadow(0 0 4px rgb(211 148 98 / 0.9));
+    transition: opacity var(--dur-fast);
+  }
+
+  .sys.is-tracing .sys__packet {
+    opacity: 1;
+  }
+
+  /* Draw-in once the plot is in view (JS only). */
+  .js .sys__plot:not(.is-revealed) .sys__line {
+    stroke-dashoffset: 1;
+  }
+
+  .js .sys__plot:not(.is-revealed) :is(.sys__port, .sys__arrow, .sys__joint, .sys__label) {
+    opacity: 0;
+  }
+
+  .sys__plot .sys__line {
+    transition:
+      stroke-dashoffset 1.3s var(--ease-out-expo) 0.35s,
+      stroke var(--t);
+  }
+
+  .sys__plot :is(.sys__port, .sys__arrow, .sys__joint, .sys__label) {
+    transition:
+      opacity var(--dur-base) var(--ease-out-expo) 1s,
+      stroke var(--t),
+      fill var(--t),
+      color var(--t);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .js .sys__plot:not(.is-revealed) .sys__line {
+      stroke-dashoffset: 0;
+    }
+
+    .js .sys__plot:not(.is-revealed) :is(.sys__port, .sys__arrow, .sys__joint, .sys__label) {
+      opacity: 1;
+    }
+  }
+
+  /* States: exploring (on the scope) and tracing (on the figure) ---------- */
+  :is(.is-exploring, .sys.is-tracing) .sys__node:not(.is-active):not(.is-linked):not(.is-traced) {
+    border-color: var(--color-line);
+  }
+
+  .is-exploring .sys__node:not(.is-active):not(.is-linked) .sys__name,
+  .sys.is-tracing .sys__node:not(.is-traced) .sys__name {
+    color: var(--color-fg-muted);
+  }
+
+  .is-exploring .sys__node:not(.is-active):not(.is-linked) .sys__icon,
+  .sys.is-tracing .sys__node:not(.is-traced) .sys__icon {
+    color: var(--color-fg-subtle);
+  }
+
+  .sys__node.is-active,
+  .sys__node.is-traced {
+    border-color: var(--color-signature);
+    box-shadow: 0 0 0 4px rgb(211 148 98 / 0.12);
+  }
+
+  .sys__node:is(.is-active, .is-traced) .sys__icon {
+    background-color: var(--color-accent);
+    color: var(--color-ink-900);
+  }
+
+  .sys__node:is(.is-active, .is-traced) .sys__kind {
+    color: var(--color-accent);
+  }
+
+  .is-exploring .sys__tab:not(.is-active):not(.is-linked) {
+    color: var(--color-fg-muted);
+  }
+
+  .sys__tab.is-active {
+    border-color: var(--color-signature);
+  }
+
+  :is(.is-exploring, .sys.is-tracing) .sys__wire:not(.is-lit):not(.is-traced) {
+    opacity: 0.3;
+  }
+
+  .sys__wire:is(.is-lit, .is-traced) :is(.sys__line, .sys__arrow) {
+    stroke: var(--color-signature);
+  }
+
+  .sys__wire:is(.is-lit, .is-traced) :is(.sys__port, .sys__joint) {
+    fill: var(--color-signature);
+    stroke: var(--color-signature);
+  }
+
+  .sys__label:is(.is-lit, .is-traced) {
+    color: var(--color-fg);
+  }
+
+  .sys__box.is-lit {
+    border-color: var(--color-signature);
+  }
+
+  .is-exploring .sys__box:not(.is-lit) {
+    border-color: var(--line-faint);
+  }
+
+  /* Readout ---------------------------------------------------------------- */
+  .sys__readout {
+    display: grid;
+    gap: 0.375rem;
+    min-height: 5.25rem;
+    padding: 0.875rem 1.125rem 1rem;
+    border-top: 1px solid var(--color-line);
+    background-color: var(--color-ink-800);
+  }
+
+  .sys__readout-key {
+    color: var(--color-accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.6875rem;
+  }
+
+  .sys__readout-text {
+    max-width: 56ch;
+    color: var(--color-fg-muted);
+    font-size: var(--text-small);
+    line-height: var(--text-small--line-height);
+  }
+
+  .sys__readout-text.is-swapping {
+    animation: enter-rise var(--dur-fast) var(--ease-out-expo);
+  }
+
+  @media (max-width: 23.99rem) {
+    .sys__icon {
+      display: none;
+    }
+  }
+
+  /* Wide: one request path across ------------------------------------------ */
+  @media (min-width: 80rem) {
+    .sys__name {
+      white-space: nowrap;
+    }
+
+    .sys__plot {
+      --wire: clamp(6.5rem, 1rem + 5vw, 8.5rem);
+      grid-template-columns:
+        minmax(0, 1fr) var(--wire) minmax(0, 1fr) var(--wire)
+        minmax(0, 1fr) var(--wire) minmax(0, 1fr);
+      grid-template-rows: repeat(3, auto);
+      grid-template-areas:
+        "zone-clients . tab . . . zone-data"
+        "react . rest . django . postgres"
+        "systems . . . python . .";
+      column-gap: 0;
+      row-gap: 2rem;
+      padding: 2rem 1.5rem 2.75rem;
+    }
+
+    .sys__box {
+      grid-column: 3 / 6;
+      grid-row: 1 / 4;
+      margin: 1.125rem -0.625rem -1.25rem;
+    }
+
+    .sys__tab {
+      justify-self: start;
+      align-self: start;
+      margin: 0 0 0 -0.25rem;
+    }
+
+    .sys__zone {
+      align-self: center;
+    }
+  }
+</style>

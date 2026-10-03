@@ -1,170 +1,137 @@
 /*
- * Design tokens.
+ * Design tokens — "Ink & Copper".
  *
- * Palette: a two-tone foundation with three small accents, each with one job.
- *   Ivory  — paper. Reading sections, the hero.
- *   Ink    — deep navy-charcoal. Text on paper; statement sections in reverse.
- *   Cobalt — action. Buttons, links and focus — never decoration.
- *   Copper — signature. At most a few marks on the whole page.
- *   Sage   — quiet. Small labels and indices only.
+ * A dark, product-grade foundation:
+ *   Ink    — the page. Five steps from the base to raised surfaces.
+ *   Ivory  — text, the primary action and the portrait's card.
+ *   Copper — signature: highlights, "now", active states. Used with intent.
+ *   Cobalt — links inside content.
+ *   Sage   — quiet status and small marks.
  *
- * Components only use the semantic layer (bg, fg, mark, accent, action, …).
- * A section's [data-tone] re-maps it: "paper" (default), "ink" or "sage".
- *
- * Tailwind's default colour and radius scales are cleared so that only these
- * tokens can be used.
+ * Components use the semantic layer (bg, surface, fg, accent, line, …).
+ * Contrast ratios are against --color-bg (#0d1218).
  */
 
 @theme static {
   /* ---------- Palette ---------- */
   --color-*: initial;
-  --color-ivory: #f5f2eb;
-  --color-stone: #ece8df;
-  --color-ink: #16212b;
-  --color-ink-raised: #1f2b37;
-  --color-slate: #56606a; /* muted text on ivory, 5.73:1 */
-  --color-mist: #a3adb6; /* muted text on ink, 7.16:1 */
-  --color-sage: #b7c2ac; /* section field */
-  --color-sage-deep: #4e6249; /* marks on ivory, 5.93:1 */
-  --color-sage-light: #a7b99d; /* marks on ink, 7.83:1 */
-  --color-cobalt: #315f98; /* action on ivory, 5.83:1 */
-  --color-cobalt-deep: #26497a; /* action/links on sage, 4.89:1 */
-  --color-cobalt-light: #8fb0dd; /* action/links on ink, 7.32:1 */
-  --color-copper: #b77a4b; /* signature on ivory — large/graphic use only, 3.18:1 */
-  --color-copper-light: #c48a5a; /* signature on ink, 5.54:1 */
+  --color-ink-950: #090d12;
+  --color-ink-900: #0d1218;
+  --color-ink-850: #10171e;
+  --color-ink-800: #141c25;
+  --color-ink-700: #1b2531;
+  --color-ink-600: #263241;
+  --color-ivory: #f3efe7;
+  --color-stone: #e7e1d5;
+  --color-mist: #a3adb7; /* 8.2:1 */
+  --color-slate: #7c8792; /* 5.1:1 */
+  --color-copper: #d39462; /* 7.3:1 */
+  --color-copper-deep: #b77a4b;
+  --color-cobalt: #8fb0dd; /* 8.4:1 */
+  --color-sage: #a7b99d; /* 9.2:1 */
 
-  /* ---------- Semantic (default tone: paper) ---------- */
-  --color-bg: var(--color-ivory);
-  --color-surface: var(--color-stone);
-  --color-fg: var(--color-ink);
-  --color-fg-muted: var(--color-slate);
-  --color-mark: var(--color-sage-deep); /* labels, indices */
+  /* ---------- Semantic ---------- */
+  --color-bg: var(--color-ink-900);
+  --color-bg-alt: var(--color-ink-850);
+  --color-surface: var(--color-ink-800);
+  --color-raised: var(--color-ink-700);
+  --color-fg: var(--color-ivory);
+  --color-fg-muted: var(--color-mist);
+  --color-fg-subtle: var(--color-slate);
+  --color-accent: var(--color-copper);
   --color-signature: var(--color-copper);
-  --color-accent: var(--color-cobalt); /* links, focus, interactive text */
-  --color-action: var(--color-cobalt); /* primary button fill */
-  --color-on-action: var(--color-ivory);
-  --color-action-hover: var(--color-ink);
-  --color-rule: rgb(22 33 43 / 0.14);
-  --color-rule-strong: rgb(22 33 43 / 0.8);
+  --color-link: var(--color-cobalt);
+  --color-mark: var(--color-sage);
+  --color-action: var(--color-ivory);
+  --color-on-action: var(--color-ink-900);
+  --color-line: rgb(243 239 231 / 0.08);
+  --color-line-strong: rgb(243 239 231 / 0.16);
+  /* Aliases kept for older component names. */
+  --color-rule: var(--color-line);
+  --color-rule-strong: var(--color-line-strong);
 
   /* ---------- Shape ---------- */
   --radius-*: initial;
-  --radius-xs: 1px;
-  --radius-sm: 2px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 999px;
 
   /* ---------- Type scale (fluid) ----------
-   * display    hero headline (serif)
-   * title      section headings (serif)
-   * headline   role titles (serif)
-   * heading    sub-headings, pillar titles (serif)
-   * subheading small serif headings: areas, skill groups
-   * standfirst editorial intro paragraph (serif)
-   * lead       larger body copy (sans)
-   * body       default body copy (sans)
-   * small      metadata, nav (sans)
-   * label      uppercase tracked labels (sans)
+   * display   hero headline (sans, tight)
+   * title     section titles
+   * heading   project names, role title
+   * subhead   card titles
+   * lead      intros
+   * body      default
+   * small     metadata, captions
+   * label     uppercase tracked labels (sans)
+   * mono      technical annotations (mono)
    */
-  --text-display: clamp(3.25rem, 0.35rem + 12.2vw, 10.25rem);
-  --text-display--line-height: 0.92;
-  --text-display--letter-spacing: -0.032em;
+  --text-display: clamp(2.875rem, 1.05rem + 6.4vw, 6.25rem);
+  --text-display--line-height: 0.98;
+  --text-display--letter-spacing: -0.045em;
 
-  --text-title: clamp(2.75rem, 1.45rem + 5.2vw, 6.25rem);
-  --text-title--line-height: 0.98;
-  --text-title--letter-spacing: -0.026em;
+  --text-title: clamp(2.25rem, 1.35rem + 3.3vw, 4.25rem);
+  --text-title--line-height: 1.02;
+  --text-title--letter-spacing: -0.04em;
 
-  --text-headline: clamp(2.125rem, 1.4rem + 2.6vw, 3.875rem);
-  --text-headline--line-height: 1.02;
-  --text-headline--letter-spacing: -0.022em;
-
-  --text-heading: clamp(1.75rem, 1.35rem + 1.3vw, 2.625rem);
+  --text-heading: clamp(1.625rem, 1.25rem + 1.3vw, 2.375rem);
   --text-heading--line-height: 1.08;
-  --text-heading--letter-spacing: -0.018em;
+  --text-heading--letter-spacing: -0.03em;
 
-  --text-subheading: clamp(1.375rem, 1.22rem + 0.5vw, 1.6875rem);
-  --text-subheading--line-height: 1.15;
-  --text-subheading--letter-spacing: -0.012em;
+  --text-subhead: clamp(1.125rem, 1.05rem + 0.3vw, 1.3125rem);
+  --text-subhead--line-height: 1.25;
+  --text-subhead--letter-spacing: -0.015em;
 
-  --text-standfirst: clamp(1.4375rem, 1.18rem + 0.95vw, 2.125rem);
-  --text-standfirst--line-height: 1.28;
-  --text-standfirst--letter-spacing: -0.008em;
+  --text-lead: clamp(1.0625rem, 0.98rem + 0.35vw, 1.25rem);
+  --text-lead--line-height: 1.6;
 
-  --text-lead: clamp(1.125rem, 1.04rem + 0.32vw, 1.3125rem);
-  --text-lead--line-height: 1.55;
-
-  --text-body: 1.0625rem;
+  --text-body: 1rem;
   --text-body--line-height: 1.65;
 
   --text-small: 0.9375rem;
-  --text-small--line-height: 1.45;
+  --text-small--line-height: 1.5;
 
   --text-label: 0.75rem;
   --text-label--line-height: 1.3;
-  --text-label--letter-spacing: 0.14em;
+  --text-label--letter-spacing: 0.12em;
+
+  --text-mono: 0.75rem;
+  --text-mono--line-height: 1.45;
+  --text-mono--letter-spacing: 0.02em;
 
   /* ---------- Motion ---------- */
   --ease-editorial: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
 @theme inline {
   /* Font stacks are generated by Astro's Fonts API (includes metric-matched fallbacks). */
   --font-serif: var(--font-newsreader);
   --font-sans: var(--font-instrument-sans);
+  --font-mono: var(--font-plex-mono);
 }
 
 :root {
   /* Layout */
-  --gutter: clamp(1.25rem, 0.55rem + 3.1vw, 4rem);
+  --gutter: clamp(1.25rem, 0.6rem + 3vw, 2.75rem);
   --col-gap: clamp(0.875rem, 0.5rem + 1.25vw, 1.75rem);
-  --content-max: 88rem;
-  --header-h: 4rem;
-  --section-space: clamp(6rem, 3.4rem + 10vw, 11rem);
+  --content-max: 78rem;
+  --header-h: 4.5rem;
+  --section-space: clamp(5.5rem, 3.5rem + 7vw, 9.5rem);
 
   /* Motion */
-  --dur-fast: 400ms;
-  --dur-base: 600ms;
+  --dur-fast: 300ms;
+  --dur-base: 500ms;
   --dur-slow: 800ms;
 }
 
-@media (min-width: 64rem) {
-  :root {
-    --header-h: 4.75rem;
-  }
-}
-
-/* ---------- Section tones ---------- */
-/* Every tone defines the full semantic set; contrast ratios are against its bg. */
-
+/* Kept so older markup with a tone attribute still gets a background. */
 [data-tone] {
   background-color: var(--color-bg);
   color: var(--color-fg);
-}
-
-[data-tone="ink"] {
-  --color-bg: var(--color-ink);
-  --color-surface: var(--color-ink-raised);
-  --color-fg: var(--color-ivory); /* 14.6:1 */
-  --color-fg-muted: var(--color-mist);
-  --color-mark: var(--color-sage-light);
-  --color-signature: var(--color-copper-light);
-  --color-accent: var(--color-cobalt-light);
-  --color-action: var(--color-cobalt-light);
-  --color-on-action: var(--color-ink);
-  --color-action-hover: var(--color-ivory);
-  --color-rule: rgb(245 242 235 / 0.14);
-  --color-rule-strong: rgb(245 242 235 / 0.6);
-}
-
-[data-tone="sage"] {
-  --color-bg: var(--color-sage);
-  --color-surface: #c5cdba;
-  --color-fg: var(--color-ink); /* 8.8:1 */
-  --color-fg-muted: #3e4a50; /* 4.92:1 */
-  --color-mark: #34452f;
-  --color-accent: var(--color-cobalt-deep);
-  --color-action: var(--color-ink);
-  --color-on-action: var(--color-ivory);
-  --color-action-hover: var(--color-cobalt-deep);
-  --color-rule: rgb(22 33 43 / 0.18);
-  --color-rule-strong: rgb(22 33 43 / 0.8);
 }

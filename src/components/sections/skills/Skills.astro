@@ -1,53 +1,661 @@
 ---
 /**
- * Skills & Learning, on ink: a map of how the tools fit together rather than
- * a list of them (see SkillMap). No levels or percentages. Tools used in the
- * current role carry the copper square, derived from the experience
- * collection so the two sections can never disagree.
+ * Skills: five areas as a bento of cards, each technology a tile.
+ *
+ * - Hover, focus or tap a tile: the technologies it works with light up in
+ *   every card, the rest step back, curves are drawn between them across the
+ *   grid (wide screens), and the card's readout says what it is for
+ *   (explore.ts; links from data/skills.ts — the only source of relations).
+ * - Area filters bring one area forward (on phones they show only that area).
+ * - "Used in my current role" lights the current role's tools and the links
+ *   among them (derived from the experience collection).
+ * No levels, percentages or ratings anywhere.
  */
 import { getCollection } from "astro:content";
 import Section from "@/components/layout/Section.astro";
-import SectionHeader from "@/components/layout/SectionHeader.astro";
-import SkillMap from "./SkillMap.astro";
+import SectionHead from "@/components/layout/SectionHead.astro";
+import Icon from "@/components/ui/Icon.astro";
+import { skillGroups, toolId, toolLinks } from "@/data/skills";
 
 const roles = await getCollection("experience");
-const currentTools = new Set(
-  roles.filter((entry) => entry.data.end === null).flatMap((entry) => entry.data.tools),
-);
+const currentTools = new Set(roles.filter((r) => r.data.end === null).flatMap((r) => r.data.tools));
+
+const nameOf = new Map(skillGroups.flatMap((g) => g.tools.map((t) => [toolId(t.name), t.name])));
+const links = toolLinks.map(([a, b]) => [toolId(a), toolId(b)] as const);
+const neighbours = (id: string) =>
+  links.flatMap(([a, b]) => (a === id ? [b] : b === id ? [a] : []));
+const list = (ids: string[]) =>
+  new Intl.ListFormat("en", { type: "conjunction" }).format(ids.map((id) => nameOf.get(id)!));
+const currentIds = [...currentTools].map(toolId).filter((id) => nameOf.has(id));
+const count = skillGroups.reduce((n, g) => n + g.tools.length, 0);
+
+const areaIcons: Record<string, string> = {
+  backend:
+    '<rect x="4" y="4" width="16" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="16" height="6.5" rx="1.5"/><path d="M7.5 7.25h.01M7.5 16.75h.01M11 7.25h5M11 16.75h5"/>',
+  frontend:
+    '<rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M3 9h18M6 6.75h.01M8.5 6.75h.01M8 13l-2 2 2 2M16 13l2 2-2 2M13 12.5l-2 5"/>',
+  data: '<ellipse cx="12" cy="6" rx="7.5" ry="2.75"/><path d="M4.5 6v12c0 1.5 3.4 2.75 7.5 2.75s7.5-1.25 7.5-2.75V6M4.5 12c0 1.5 3.4 2.75 7.5 2.75s7.5-1.25 7.5-2.75"/>',
+  cloud:
+    '<path d="M7 18.5h10.25a4.25 4.25 0 0 0 .6-8.46A6 6 0 0 0 6.3 9.4 4.6 4.6 0 0 0 7 18.5Z"/>',
+  ai: '<path d="M12 3.5l1.6 4.4 4.4 1.6-4.4 1.6L12 15.5l-1.6-4.4L6 9.5l4.4-1.6Z"/><path d="M18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8Z"/>',
+};
+const defaultText = "Pick a technology to see what it works with.";
 ---
 
-<Section id="skills" labelledBy="skills-title" tone="ink">
-  <div class="skills grid-editorial">
-    <SectionHeader label="Skills & Learning" titleId="skills-title">
-      How the pieces fit.
-    </SectionHeader>
+<Section id="skills" labelledBy="skills-title" surface="alt">
+  <SectionHead index="03" label="Skills" titleId="skills-title">
+    The stack, <span class="accent-word">connected.</span>
+    <Fragment slot="intro">
+      {count} technologies in five areas, grouped by where they sit in a system. Pick one to see
+      what it works with.
+    </Fragment>
+  </SectionHead>
 
-    <p class="skills__lede text-lead" data-reveal>
-      Backend sits at the centre. Each line marks a place where two areas actually meet.
-    </p>
+  <div class="sk" data-skills data-links={JSON.stringify(links)}>
+    <div class="sk__bar" data-reveal>
+      <div class="sk__tabs" role="group" aria-label="Show an area" data-tabs>
+        <span class="sk__tab-pill" aria-hidden="true" data-tab-pill></span>
+        <button type="button" class="sk__tab" data-filter="all" aria-pressed="true">
+          All
+        </button>
+        {skillGroups.map((g) => (
+          <button type="button" class="sk__tab" data-filter={g.id} aria-pressed="false">
+            {g.name}
+          </button>
+        ))}
+      </div>
+      <button
+        type="button"
+        class="sk__key"
+        data-node="current"
+        data-members={currentIds.join(" ")}
+        data-links=""
+        data-title="Used in my current role"
+        data-text={`${list(currentIds)}.`}
+        aria-pressed="false"
+      >
+        <span class="sk__key-mark" aria-hidden="true"></span>
+        Used in my current role
+      </button>
+    </div>
 
-    <div class="skills__map" data-reveal style="--delay: 90ms">
-      <SkillMap currentTools={currentTools} />
+    <div class="sk__grid" data-grid data-filter-state="all">
+      <svg class="sk__wires" data-wires-svg aria-hidden="true"></svg>
+      {skillGroups.map((group) => (
+        <section
+          class:list={["sk__card", `sk__card--${group.id}`, "spot"]}
+          data-spotlight
+          data-area={group.id}
+          aria-labelledby={`sk-${group.id}`}
+        >
+          <header class="sk__card-head">
+            <svg
+              class="sk__area-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+              set:html={areaIcons[group.id]}
+            />
+            <h3 id={`sk-${group.id}`} class="sk__card-title">
+              {group.name}
+            </h3>
+            <span class="sk__count mono" aria-label={`${group.tools.length} technologies`}>
+              {String(group.tools.length).padStart(2, "0")}
+            </span>
+          </header>
+
+          <ul class="sk__tools" role="list" data-roving data-stagger>
+            {group.tools.map((tool) => {
+              const id = toolId(tool.name);
+              const near = neighbours(id);
+              const current = currentTools.has(tool.name);
+              return (
+                <li>
+                  <button
+                    type="button"
+                    class:list={["sk__tile", { "is-current": current }]}
+                    data-node={id}
+                    data-links={near.join(" ")}
+                    data-title={tool.name}
+                    data-kind={tool.kind}
+                    data-text={tool.text}
+                    aria-describedby={`sk-d-${id}`}
+                    aria-pressed="false"
+                  >
+                    <span class="sk__tile-icon">
+                      <Icon id={id} />
+                    </span>
+                    <span class="sk__tile-text">
+                      <span class="sk__tile-name">{tool.name}</span>
+                      <span class="sk__tile-kind mono">{tool.kind}</span>
+                    </span>
+                    {current && <span class="sk__tile-now" aria-hidden="true" />}
+                  </button>
+                  <span id={`sk-d-${id}`} class="sr-only">
+                    {tool.kind}. {tool.text}
+                    {current && " Used in my current role."}
+                    {near.length > 0 && ` Works with ${list(near)}.`}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+
+          <p class="sk__readout" data-readout={group.id} data-default={group.text}>
+            {group.text}
+          </p>
+        </section>
+      ))}
     </div>
   </div>
 </Section>
 
+<script>
+  import { explore, type ExploreState } from "@/scripts/explore";
+  import { frame, svgEl } from "@/scripts/wires";
+
+  const wide = matchMedia("(min-width: 64rem)");
+
+  document.querySelectorAll<HTMLElement>("[data-skills]").forEach((root) => {
+    const grid = root.querySelector<HTMLElement>("[data-grid]")!;
+    const svg = root.querySelector<SVGSVGElement>("[data-wires-svg]")!;
+    const links: [string, string][] = JSON.parse(root.dataset.links ?? "[]");
+    const tile = (id: string) => root.querySelector<HTMLElement>(`.sk__tile[data-node="${id}"]`);
+    const nameOf = (id: string) => tile(id)?.dataset.title ?? id;
+    let last: ExploreState | null = null;
+
+    // Curves between related tiles, across cards (wide screens only).
+    const draw = () => {
+      svg.replaceChildren();
+      if (!last?.id || !wide.matches) return;
+      const { active, linked } = last;
+      const { sx, sy, box } = frame(grid, svg);
+      const lit = links.filter(
+        ([a, b]) =>
+          (active.has(a) || active.has(b)) &&
+          (active.has(a) || linked.has(a)) &&
+          (active.has(b) || linked.has(b)),
+      );
+      lit.forEach(([a, b], i) => {
+        const ea = tile(a)?.querySelector(".sk__tile-icon");
+        const eb = tile(b)?.querySelector(".sk__tile-icon");
+        if (!ea || !eb) return;
+        const A = box(ea);
+        const B = box(eb);
+        const [x1, y1, x2, y2] = [sx(A.cx), sy(A.cy), sx(B.cx), sy(B.cy)];
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const bow = Math.min(90, Math.hypot(dx, dy) * 0.22);
+        // Bow each curve to one side of the straight line between the two.
+        const cx = (x1 + x2) / 2 - (dy / (Math.hypot(dx, dy) || 1)) * bow;
+        const cy = (y1 + y2) / 2 + (dx / (Math.hypot(dx, dy) || 1)) * bow;
+        const path = svgEl("path", {
+          d: `M${x1},${y1} Q${cx},${cy} ${x2},${y2}`,
+          pathLength: 1,
+          style: `--i: ${i}`,
+        });
+        svg.append(
+          path,
+          svgEl("circle", { cx: x1, cy: y1, r: 3 }),
+          svgEl("circle", { cx: x2, cy: y2, r: 3 }),
+        );
+      });
+    };
+
+    const onChange = (state: ExploreState) => {
+      last = state;
+      const { id, active, linked } = state;
+      // Cards that hold the active technology, or one linked to it.
+      root.querySelectorAll<HTMLElement>(".sk__card").forEach((card) => {
+        const tiles = [...card.querySelectorAll<HTMLElement>(".sk__tile")].map(
+          (t) => t.dataset.node!,
+        );
+        card.classList.toggle(
+          "is-focus",
+          tiles.some((t) => active.has(t)),
+        );
+        card.classList.toggle(
+          "is-related",
+          tiles.some((t) => linked.has(t)),
+        );
+        const readout = card.querySelector<HTMLElement>("[data-readout]")!;
+        const own = id && tiles.includes(id) ? tile(id) : null;
+        const next = own
+          ? `${own.dataset.text}${linked.size ? ` Works with ${[...linked].map(nameOf).join(", ")}.` : ""}`
+          : readout.dataset.default!;
+        if (readout.textContent !== next) {
+          readout.textContent = next;
+          readout.classList.toggle("is-live", Boolean(own));
+        }
+      });
+      draw();
+    };
+
+    const explorer = explore(root, { onChange });
+
+    // Area filters ---------------------------------------------------------
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>("[data-filter]")];
+    const pill = root.querySelector<HTMLElement>("[data-tab-pill]")!;
+    const placePill = () => {
+      const on = tabs.find((t) => t.getAttribute("aria-pressed") === "true")!;
+      pill.style.width = `${on.offsetWidth}px`;
+      pill.style.transform = `translate(${on.offsetLeft}px, ${on.offsetTop}px)`;
+      pill.style.height = `${on.offsetHeight}px`;
+    };
+    for (const tab of tabs) {
+      tab.addEventListener("click", () => {
+        tabs.forEach((t) => t.setAttribute("aria-pressed", String(t === tab)));
+        grid.dataset.filterState = tab.dataset.filter;
+        explorer.clear(false);
+        placePill();
+      });
+    }
+
+    new ResizeObserver(() => (placePill(), draw())).observe(grid);
+    document.fonts?.ready.then(placePill);
+  });
+</script>
+
 <style>
-  .skills__lede {
-    margin-top: 1.75rem;
-    max-width: 44ch;
-    color: var(--color-fg-muted);
+  .sk {
+    margin-top: clamp(2.5rem, 2rem + 2vw, 4rem);
   }
 
-  .skills__map {
+  /* Bar: filters + key ----------------------------------------------------- */
+  .sk__bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 1.5rem;
+  }
+
+  .sk__tabs {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.3125rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-ink-900);
+  }
+
+  .sk__tab-pill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: calc(var(--radius-lg) - 0.3125rem);
+    background-color: var(--color-raised);
+    box-shadow: inset 0 0 0 1px var(--color-line-strong);
+    transition:
+      transform var(--dur-base) var(--ease-out-expo),
+      width var(--dur-base) var(--ease-out-expo);
+  }
+
+  .sk__tab {
+    position: relative;
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    border-radius: var(--radius-md);
+    color: var(--color-fg-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color var(--dur-fast);
+  }
+
+  .sk__tab:hover,
+  .sk__tab[aria-pressed="true"] {
+    color: var(--color-fg);
+  }
+
+  .sk__key {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 2.75rem;
+    padding: 0 1rem;
+    border: 1px solid var(--color-line-strong);
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      border-color var(--dur-fast),
+      background-color var(--dur-fast);
+  }
+
+  .sk__key:hover,
+  .sk__key.is-active {
+    border-color: rgb(211 148 98 / 0.6);
+    background-color: rgb(211 148 98 / 0.08);
+  }
+
+  .sk__key-mark {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+  }
+
+  /* Bento ------------------------------------------------------------------- */
+  .sk__grid {
+    position: relative;
     display: grid;
-    grid-template-columns: subgrid;
-    margin-top: 2rem;
+    gap: 1rem;
+    margin-top: 1.25rem;
+  }
+
+  .sk__wires {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .sk__wires :global(path) {
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 1.25;
+    stroke-opacity: 0.75;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: sk-draw 700ms var(--ease-out-expo) forwards;
+    animation-delay: calc(var(--i) * 45ms);
+  }
+
+  .sk__wires :global(circle) {
+    fill: var(--color-accent);
+  }
+
+  @keyframes sk-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .sk__card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+    transition:
+      opacity var(--dur-base) var(--ease-out-expo),
+      transform var(--dur-base) var(--ease-out-expo),
+      border-color var(--dur-base);
+  }
+
+  .sk__card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .sk__area-icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0.4375rem;
+    border-radius: var(--radius-sm);
+    background-color: rgb(211 148 98 / 0.1);
+    color: var(--color-accent);
+  }
+
+  .sk__card-title {
+    font-size: var(--text-subhead);
+    line-height: var(--text-subhead--line-height);
+    letter-spacing: var(--text-subhead--letter-spacing);
+    font-weight: 600;
+  }
+
+  .sk__count {
+    margin-left: auto;
+    color: var(--color-fg-subtle);
+  }
+
+  .sk__tools {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+  }
+
+  .sk__tile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    height: 100%;
+    min-height: 3.75rem;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-md);
+    background-color: rgb(243 239 231 / 0.02);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color var(--dur-fast),
+      background-color var(--dur-fast),
+      opacity var(--dur-base),
+      transform var(--dur-base) var(--ease-spring);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sk__tile-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-sm);
+    background-color: rgb(243 239 231 / 0.06);
+    color: var(--color-fg);
+    transition:
+      background-color var(--dur-fast),
+      color var(--dur-fast),
+      transform var(--dur-base) var(--ease-spring);
+  }
+
+  .sk__tile-icon :global(.icon) {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .sk__tile-text {
+    display: grid;
+    gap: 0.1875rem;
+    min-width: 0;
+  }
+
+  .sk__tile-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+  }
+
+  .sk__tile-kind {
+    color: var(--color-fg-subtle);
+    font-size: 0.6875rem;
+    line-height: 1.3;
+  }
+
+  .sk__tile-now {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+  }
+
+  .sk__tile:hover {
+    border-color: var(--color-line-strong);
+    background-color: rgb(243 239 231 / 0.05);
+    transform: translateY(-2px);
+  }
+
+  .sk__tile:hover .sk__tile-icon {
+    transform: scale(1.08);
+  }
+
+  .sk__readout {
+    margin-top: auto;
+    padding-top: 1.125rem;
+    color: var(--color-fg-muted);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .sk__tools + .sk__readout {
+    margin-top: 1rem;
+    border-top: 1px dashed var(--color-line);
+  }
+
+  .sk__readout.is-live {
+    color: var(--color-fg);
+    animation: enter-rise var(--dur-fast) var(--ease-out-expo);
+  }
+
+  /* Exploring: active + linked forward, the rest back ---------------------- */
+  :global(.is-exploring) .sk__tile:not(.is-active):not(.is-linked) {
+    opacity: 0.38;
+  }
+
+  .sk__tile.is-linked {
+    border-color: rgb(211 148 98 / 0.5);
+  }
+
+  .sk__tile.is-active {
+    border-color: var(--color-accent);
+    background-color: rgb(211 148 98 / 0.08);
+    transform: translateY(-2px);
+  }
+
+  .sk__tile.is-active .sk__tile-icon {
+    background-color: var(--color-accent);
+    color: var(--color-ink-900);
+  }
+
+  .sk__tile.is-linked .sk__tile-icon {
+    color: var(--color-accent);
+  }
+
+  .sk__card.is-focus,
+  .sk__card.is-related {
+    border-color: var(--color-line-strong);
+  }
+
+  /* Filters ----------------------------------------------------------------- */
+  [data-filter-state="backend"] .sk__card:not(.sk__card--backend),
+  [data-filter-state="frontend"] .sk__card:not(.sk__card--frontend),
+  [data-filter-state="data"] .sk__card:not(.sk__card--data),
+  [data-filter-state="cloud"] .sk__card:not(.sk__card--cloud),
+  [data-filter-state="ai"] .sk__card:not(.sk__card--ai) {
+    opacity: 0.3;
+    transform: scale(0.985);
+  }
+
+  /* Phones: filtering shows just that area. */
+  @media (max-width: 47.99rem) {
+    [data-filter-state="backend"] .sk__card:not(.sk__card--backend),
+    [data-filter-state="frontend"] .sk__card:not(.sk__card--frontend),
+    [data-filter-state="data"] .sk__card:not(.sk__card--data),
+    [data-filter-state="cloud"] .sk__card:not(.sk__card--cloud),
+    [data-filter-state="ai"] .sk__card:not(.sk__card--ai) {
+      display: none;
+    }
+
+    .sk__tabs {
+      flex-wrap: nowrap;
+      width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .sk__tab {
+      flex: none;
+    }
+  }
+
+  @media (min-width: 48rem) {
+    .sk__grid {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .sk__card--backend {
+      grid-column: span 6;
+    }
+    .sk__card--frontend,
+    .sk__card--data {
+      grid-column: span 3;
+    }
+    .sk__card--cloud,
+    .sk__card--ai {
+      grid-column: span 3;
+    }
+
+    .sk__card--backend .sk__tools {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
 
   @media (min-width: 64rem) {
-    .skills__lede {
-      grid-column: col-start 4 / content-end;
+    .sk__grid {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+
+    .sk__card {
+      padding: 1.5rem;
+    }
+
+    .sk__card--backend {
+      grid-column: span 7;
+    }
+    .sk__card--frontend {
+      grid-column: span 5;
+    }
+    .sk__card--data {
+      grid-column: span 3;
+    }
+    .sk__card--cloud {
+      grid-column: span 4;
+    }
+    .sk__card--ai {
+      grid-column: span 5;
+    }
+
+    .sk__card--backend .sk__tools {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sk__card--backend .sk__tile {
+      min-height: 4.5rem;
+    }
+
+    .sk__card--backend .sk__tile-icon {
+      width: 2.75rem;
+      height: 2.75rem;
+    }
+
+    .sk__card--backend .sk__tile-icon :global(.icon) {
+      width: 1.375rem;
+      height: 1.375rem;
+    }
+
+    .sk__card--data .sk__tools {
+      grid-template-columns: 1fr;
     }
   }
 </style>
